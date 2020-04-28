@@ -8,6 +8,99 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+
+
+class dialog_conf():
+    """The class's docstring"""
+
+    def __init__(self):
+        super().__init__()
+
+        self.Ui_DialogConf = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_conf.ui'))
+        self.Ui_DialogConf.setWindowTitle('configuration')
+
+        # call backs for dialog here
+        self.Ui_DialogConf.set_projects_button.clicked.connect(self.set_projects_path)
+        self.Ui_DialogConf.set_sources_button.clicked.connect(self.set_sources_path)
+
+    def set_projects_path(self):
+        """
+
+        :return:
+        """
+        import os
+        import json
+        from PyQt5.QtWidgets import QFileDialog
+        from pytecpiv_conf import pytecpiv_get_pref
+
+        # get the data from the conf file if exist
+        file_exist, sources_path, projects_path = pytecpiv_get_pref()
+        print(file_exist)
+
+        current_directory = os.getcwd()
+        print(current_directory)
+        new_projects_path = QFileDialog.getExistingDirectory(self, 'Open directory', current_directory)
+
+        if file_exist == 'yes':
+            #  write in the file
+            with open('pytecpiv_settings.json') as f:
+                pytecpiv_settings = json.load(f)
+
+            pytecpiv_settings['projects'] = []
+            pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
+            with open('pytecpiv_settings.json', 'w') as outfile:
+                json.dump(pytecpiv_settings, outfile)
+
+
+        else:
+            #  create the conf file and write in
+            pytecpiv_settings = {'sources': []}
+            pytecpiv_settings['sources'].append({'sources_path': ' '})
+            pytecpiv_settings['projects'] = []
+            pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
+            with open('pytecpiv_settings.json', 'w') as outfile:
+                json.dump(pytecpiv_settings, outfile)
+
+        self.sources_label.setText(sources_path)
+        self.projects_label.setText(projects_path)
+
+    def set_sources_path(self):
+        """
+
+        """
+        import os
+        import json
+        from PyQt5.QtWidgets import QFileDialog
+        from pytecpiv_conf import pytecpiv_get_pref
+
+        # get the data from the conf file if exist
+        file_exist, sources_path, projects_path = pytecpiv_get_pref()
+
+        current_directory = os.getcwd()
+        new_sources_path = QFileDialog.getExistingDirectory(self, 'Open directory', current_directory)
+
+        if file_exist == 'yes':
+            #  write in the file
+            with open('pytecpiv_settings.json') as f:
+                pytecpiv_settings = json.load(f)
+
+            pytecpiv_settings['sources'] = []
+            pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
+            with open('pytecpiv_settings.json', 'w') as outfile:
+                json.dump(pytecpiv_settings, outfile)
+
+        else:
+            #  create the conf file and write in
+            pytecpiv_settings = {'sources': []}
+            pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
+            pytecpiv_settings['projects'] = []
+            pytecpiv_settings['projects'].append({'projects_path': ' '})
+            with open('pytecpiv_settings.json', 'w') as outfile:
+                json.dump(pytecpiv_settings, outfile)
+
+        self.sources_label.setText(sources_path)
+        self.projects_label.setText(projects_path)
+
 class AppContext(ApplicationContext):
     def __init__(self):
         super().__init__()
@@ -22,6 +115,10 @@ class AppContext(ApplicationContext):
         #  set the menubar
         self.ui_main_window.menubar = self.ui_main_window.menuBar()
         self.ui_main_window.menubar.setNativeMenuBar(False)
+
+        #  define callbacks here
+        self.ui_main_window.actionConfiguration.triggered.connect(self.show_conf_fn)  # menu settings
+        self.dialog_conf = dialog_conf()
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -82,6 +179,18 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.mplvl.removeWidget(self.figure_toolbar)
         self.figure_toolbar.close()
+
+    def show_conf_fn(self):
+        """This function makes visible the dialogue box for the configuration"""
+        import os
+        from pytecpiv_conf import pytecpiv_get_pref
+
+        current_directory = os.getcwd()
+        (file_exist, sources_path, projects_path) = pytecpiv_get_pref()
+        self.dialog_conf.Ui_DialogConf.code_label.setText(current_directory)
+        self.dialog_conf.Ui_DialogConf.sources_label.setText(sources_path)
+        self.dialog_conf.Ui_DialogConf.projects_label.setText(projects_path)
+        self.dialog_conf.Ui_DialogConf.show()
 
 if __name__ == '__main__':
     app_context = AppContext()  # 4. Instantiate the subclass
