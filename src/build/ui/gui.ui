@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1323</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Dataset: </string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="Dataset_comboBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>255</width>
+          <height>35</height>
+         </size>
+        </property>
+        <item>
+         <property name="text">
+          <string>Licence &amp; credits</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLabel" name="time_label">
+          <property name="text">
+           <string>Time:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="time_text">
+          <property name="text">
+           <string>0</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="tim_unit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>s</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="frame_label">
+          <property name="text">
+           <string>Frame:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="frame_text">
+          <property name="text">
+           <string>0</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="FrameDownPushButton">
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>-</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="FrameUpPushButton">
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>+</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>Image properties</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Img_pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>25</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Vector properties</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Vector_pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>25</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_4">
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Scalar properties</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="Scalar_pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>25</width>
+            <height>25</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QTextBrowser" name="textBrowser">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>200</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>9</pointsize>
+         </font>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QWidget" name="mplfig" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="autoFillBackground">
+       <bool>true</bool>
+      </property>
+      <layout class="QVBoxLayout" name="mplvl"/>
+     </widget>
+    </item>
+    <item>
+     <widget class="QWidget" name="widget" native="true"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1323</width>
+     <height>22</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menu_project">
+    <property name="title">
+     <string>Project</string>
+    </property>
+    <addaction name="new_project_menu"/>
+    <addaction name="project_open_menu"/>
+    <addaction name="project_save_menu"/>
+    <addaction name="project_close_menu"/>
+   </widget>
+   <widget class="QMenu" name="menumenu_2">
+    <property name="title">
+     <string>Data</string>
+    </property>
+    <addaction name="import_calib_menu"/>
+    <addaction name="import_exp_menu"/>
+   </widget>
+   <widget class="QMenu" name="menuPreprocessing">
+    <property name="title">
+     <string>Preprocessing</string>
+    </property>
+    <addaction name="actionSubtract_Gaussian"/>
+    <addaction name="actionRectify"/>
+   </widget>
+   <widget class="QMenu" name="menuCalibration">
+    <property name="title">
+     <string>Calibration</string>
+    </property>
+    <addaction name="Calibration_board_menu"/>
+    <addaction name="rectification_menu"/>
+    <addaction name="find_rectification_menu"/>
+   </widget>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="actionConfiguration"/>
+   </widget>
+   <addaction name="menuSettings"/>
+   <addaction name="menu_project"/>
+   <addaction name="menumenu_2"/>
+   <addaction name="menuCalibration"/>
+   <addaction name="menuPreprocessing"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="new_project_menu">
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="import_calib_menu">
+   <property name="text">
+    <string>Import Calibration image</string>
+   </property>
+  </action>
+  <action name="project_open_menu">
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="project_save_menu">
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="project_close_menu">
+   <property name="text">
+    <string>Close</string>
+   </property>
+  </action>
+  <action name="import_exp_menu">
+   <property name="text">
+    <string>Import Experimental images</string>
+   </property>
+  </action>
+  <action name="actionSubtract_Gaussian">
+   <property name="text">
+    <string>Image intensity</string>
+   </property>
+  </action>
+  <action name="actionInvert">
+   <property name="text">
+    <string>Invert</string>
+   </property>
+  </action>
+  <action name="actionNormalize">
+   <property name="text">
+    <string>Normalize</string>
+   </property>
+  </action>
+  <action name="set_time_interval_menu">
+   <property name="text">
+    <string>Set time interval</string>
+   </property>
+  </action>
+  <action name="project_metadata_menu">
+   <property name="text">
+    <string>Metadata</string>
+   </property>
+  </action>
+  <action name="actionPolynomial">
+   <property name="text">
+    <string>Polynomial rectification</string>
+   </property>
+  </action>
+  <action name="actionProjective_polynomial">
+   <property name="text">
+    <string>Projective + polynomial</string>
+   </property>
+  </action>
+  <action name="Calibration_board_menu">
+   <property name="text">
+    <string>Define calibration board</string>
+   </property>
+  </action>
+  <action name="actionProjective_2">
+   <property name="text">
+    <string>Projective</string>
+   </property>
+  </action>
+  <action name="actionPolynomial_2">
+   <property name="text">
+    <string>Polynomial 2</string>
+   </property>
+  </action>
+  <action name="actionPolynomial_3">
+   <property name="text">
+    <string>Polynomial 3</string>
+   </property>
+  </action>
+  <action name="actionProjective_polynomial_2">
+   <property name="text">
+    <string>Projective + polynomial 2</string>
+   </property>
+  </action>
+  <action name="actionProjective_polynomial_3">
+   <property name="text">
+    <string>Projective + polynomial 3</string>
+   </property>
+  </action>
+  <action name="actionRectify">
+   <property name="text">
+    <string>Rectify</string>
+   </property>
+  </action>
+  <action name="rectification_menu">
+   <property name="text">
+    <string>Rectification function</string>
+   </property>
+  </action>
+  <action name="find_rectification_menu">
+   <property name="text">
+    <string>Find function</string>
+   </property>
+  </action>
+  <action name="actionConfiguration">
+   <property name="text">
+    <string>Configuration</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

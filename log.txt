@@ -1,0 +1,3 @@
+2020-04-28 20:45:37.771825
+Starting new instance of PyTecPIV
+version 0.0.1alpha
