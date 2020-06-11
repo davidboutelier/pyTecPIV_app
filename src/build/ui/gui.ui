@@ -257,7 +257,7 @@
         </property>
         <property name="font">
          <font>
-          <pointsize>9</pointsize>
+          <pointsize>7</pointsize>
          </font>
         </property>
        </widget>
@@ -289,7 +289,7 @@
      <x>0</x>
      <y>0</y>
      <width>1323</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_project">
@@ -305,8 +305,22 @@
     <property name="title">
      <string>Data</string>
     </property>
-    <addaction name="import_calib_menu"/>
-    <addaction name="import_exp_menu"/>
+    <widget class="QMenu" name="menuImport_Calibration_image">
+     <property name="title">
+      <string>Import Calibration image</string>
+     </property>
+     <addaction name="import_calib_dng"/>
+     <addaction name="import_calib_tif"/>
+    </widget>
+    <widget class="QMenu" name="menuImport_Experimental_images">
+     <property name="title">
+      <string>Import Experimental images</string>
+     </property>
+     <addaction name="import_exp_dng"/>
+     <addaction name="import_exp_tif"/>
+    </widget>
+    <addaction name="menuImport_Calibration_image"/>
+    <addaction name="menuImport_Experimental_images"/>
    </widget>
    <widget class="QMenu" name="menuPreprocessing">
     <property name="title">
@@ -341,11 +355,6 @@
     <string>New</string>
    </property>
   </action>
-  <action name="import_calib_menu">
-   <property name="text">
-    <string>Import Calibration image</string>
-   </property>
-  </action>
   <action name="project_open_menu">
    <property name="text">
     <string>Open</string>
@@ -359,11 +368,6 @@
   <action name="project_close_menu">
    <property name="text">
     <string>Close</string>
-   </property>
-  </action>
-  <action name="import_exp_menu">
-   <property name="text">
-    <string>Import Experimental images</string>
    </property>
   </action>
   <action name="actionSubtract_Gaussian">
@@ -449,6 +453,26 @@
   <action name="actionConfiguration">
    <property name="text">
     <string>Configuration</string>
+   </property>
+  </action>
+  <action name="import_calib_dng">
+   <property name="text">
+    <string>dng</string>
+   </property>
+  </action>
+  <action name="import_calib_tif">
+   <property name="text">
+    <string>tif</string>
+   </property>
+  </action>
+  <action name="import_exp_dng">
+   <property name="text">
+    <string>dng</string>
+   </property>
+  </action>
+  <action name="import_exp_tif">
+   <property name="text">
+    <string>tif</string>
    </property>
   </action>
  </widget>

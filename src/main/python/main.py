@@ -9,9 +9,10 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 
-
 class dialog_conf():
-    """The class's docstring"""
+    """
+    Class for the objects in the dialog window for configuration of pyTecPIV
+    """
 
     def __init__(self):
         super().__init__()
@@ -25,8 +26,10 @@ class dialog_conf():
 
     def set_projects_path(self):
         """
-
-        :return:
+        Defines the path where source material is generally located.
+        Used to accelerate finding the project source by jumping directly into a usual directory.
+        If file pytecpiv_settings.json does not exist in pyTecPIV source directory, a new file is created.
+        If file exists, path is read from file if exist. Path in file is updated.
         """
         import os
         import json
@@ -35,11 +38,9 @@ class dialog_conf():
 
         # get the data from the conf file if exist
         file_exist, sources_path, projects_path = pytecpiv_get_pref()
-        print(file_exist)
 
         current_directory = os.getcwd()
-        print(current_directory)
-        new_projects_path = QFileDialog.getExistingDirectory(self, 'Open directory', current_directory)
+        new_projects_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
 
         if file_exist == 'yes':
             #  write in the file
@@ -51,9 +52,11 @@ class dialog_conf():
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
-
         else:
             #  create the conf file and write in
+            message = '> Creating configuration file: pytecpiv_settings.json'
+            app_context.d_print(message)
+
             pytecpiv_settings = {'sources': []}
             pytecpiv_settings['sources'].append({'sources_path': ' '})
             pytecpiv_settings['projects'] = []
@@ -61,12 +64,21 @@ class dialog_conf():
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
-        self.sources_label.setText(sources_path)
-        self.projects_label.setText(projects_path)
+        self.Ui_DialogConf.sources_label.setText(sources_path)
+        self.Ui_DialogConf.projects_label.setText(new_projects_path)
+
+        message = '> New projects path written in file pytecpiv_settings.json'
+        app_context.d_print(message)
+
+        message = '> New projects path is: ' + new_projects_path
+        app_context.d_print(message)
 
     def set_sources_path(self):
         """
-
+        Defines the path where source material is generally located.
+        Used to accelerate finding the project source by jumping directly into a usual directory.
+        If file pytecpiv_settings.json does not exist in pyTecPIV source directory, a new file is created.
+        If file exists, path is read from file if exist. Path in file is updated.
         """
         import os
         import json
@@ -77,7 +89,7 @@ class dialog_conf():
         file_exist, sources_path, projects_path = pytecpiv_get_pref()
 
         current_directory = os.getcwd()
-        new_sources_path = QFileDialog.getExistingDirectory(self, 'Open directory', current_directory)
+        new_sources_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
 
         if file_exist == 'yes':
             #  write in the file
@@ -91,6 +103,9 @@ class dialog_conf():
 
         else:
             #  create the conf file and write in
+            message = '> Creating configuration file: pytecpiv_settings.json'
+            app_context.d_print(message)
+
             pytecpiv_settings = {'sources': []}
             pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
             pytecpiv_settings['projects'] = []
@@ -98,10 +113,19 @@ class dialog_conf():
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
-        self.sources_label.setText(sources_path)
-        self.projects_label.setText(projects_path)
+        self.Ui_DialogConf.sources_label.setText(new_sources_path)
+        self.Ui_DialogConf.projects_label.setText(projects_path)
+
+        message = '> New sources path written in file pytecpiv_settings.json'
+        app_context.d_print(message)
+
+        message = '> New sources path is: ' + new_sources_path
+        app_context.d_print(message)
 
 class AppContext(ApplicationContext):
+    """
+
+    """
     def __init__(self):
         super().__init__()
 
@@ -120,37 +144,55 @@ class AppContext(ApplicationContext):
         self.ui_main_window.actionConfiguration.triggered.connect(self.show_conf_fn)  # menu settings
         self.dialog_conf = dialog_conf()
 
+        self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
+        self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
+
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
         if t:
             os.remove('log.txt')
 
         #  startup message in log file and text browser
-        message = str(datetime.now())
+        message = '> '+str(datetime.now())
         self.d_print(message)
 
-        message = 'Starting new instance of PyTecPIV'
-        self.d_print(message)
-
-        message = 'version ' + version
+        message = '> Starting new instance of pytecpiv_app_' + version
         self.d_print(message)
 
         #  make first credit figure
+        import numpy as np
+        x = np.linspace(0, 1, num=101)
+        y = np.linspace(0, 1, num=101)
+        dx = x[1] - x[0]
+        X, Y = np.meshgrid(x, y)
+        theta = np.arctan2(Y-0.5, X-0.5)
+        rho = np.sqrt((X-0.5) ** 2 + (Y-0.5) ** 2)
+        u = rho * np.sin(theta)
+        v = rho * np.cos(theta)
+
+        dudx, dudy = np.gradient(u, 2) / dx
+        dvdx, dvdy = np.gradient(v, 2) / dx
+
+        omega = dvdx - dudy
+        m = np.sqrt(u ** 2 + v ** 2)
+
+
         fig1 = plt.figure()
         ax1f1 = fig1.add_subplot(111)
+        ax1f1.pcolor(X, Y, m)
+        ax1f1.quiver(X[::10,::10],Y[::10,::10],u[::10,::10],v[::10,::10], pivot='middle')
         s1 = app_name + ' v.' + version
-        s2 = 'build on Python 3.7 with the following packages:'
-        s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib'
-        s4 = 'GUI build with Qt5'
+        s2 = 'build with Python 3 and:'
+        s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib, pandas, pyqt'
+
         s5 = 'D. Boutelier, 2020'
         ax1f1.margins(0, 0, tight=True)
-        ax1f1.set_ylim([0, 1])
-        ax1f1.set_xlim([0, 1])
-        ax1f1.text(0.01, 0.95, s1, fontsize=14)
-        ax1f1.text(0.01, 0.9, s2, fontsize=10)
-        ax1f1.text(0.01, 0.85, s3, fontsize=10)
-        ax1f1.text(0.01, 0.775, s4, fontsize=10)
-        ax1f1.text(0.01, 0.7, s5, fontsize=9)
+        ax1f1.set_ylim([-0.10, 1.1])
+        ax1f1.set_xlim([-0.1, 1.1])
+        ax1f1.text(0.01, 0.95, s1, fontsize=18, backgroundcolor='w', color='k', fontweight='bold')
+        ax1f1.text(0.01, 0.9, s2, fontsize=10, backgroundcolor='w', color='b')
+        ax1f1.text(0.01, 0.85, s3, fontsize=10, backgroundcolor='w', color='b')
+        ax1f1.text(0.01, 0.8, s5, fontsize=9, backgroundcolor='w', color='b')
         ax1f1.set_aspect('equal')
         ax1f1.set_axis_off()
 
@@ -191,6 +233,71 @@ class AppContext(ApplicationContext):
         self.dialog_conf.Ui_DialogConf.sources_label.setText(sources_path)
         self.dialog_conf.Ui_DialogConf.projects_label.setText(projects_path)
         self.dialog_conf.Ui_DialogConf.show()
+
+    def new_project(self):
+        """
+
+        :return:
+        """
+        import os
+        import json
+        from PyQt5.QtWidgets import QFileDialog
+        from pytecpiv_conf import pytecpiv_get_pref
+        from shutil import copy
+
+        # get the data from the conf file if exist
+        file_exist, sources_path, projects_path = pytecpiv_get_pref()
+
+        # create a new directory
+        this_project_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Create new project directory',
+                                                             projects_path)
+
+        # create a time stamp
+        this_project_create_time = str(datetime.now())
+
+        # get project name from directory name
+        (this_project_root_path, this_project_name) = os.path.split(this_project_path)
+
+        # create a current project_metadata file
+        project_metadata = {'project': [], 'data_sources': []}
+        project_metadata['project'].append({
+            'project_root_path': this_project_root_path,
+            'project_name': this_project_name,
+            'project_create_time': this_project_create_time
+        })
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        message = '> New project created: '+this_project_path
+        self.d_print(message)
+
+        # make a copy of the current metadata file in the project directory
+        this_project_metadata_filename = this_project_name + '.json'
+        copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
+                                                           this_project_metadata_filename))
+
+    def import_calib_img_dng(self):
+        """
+        import dng images of calibration board
+        :return:
+        """
+        import json
+        import pandas as pd
+        from PyQt5.QtWidgets import QFileDialog
+        # load the json file
+
+        with open('pytecpiv_settings.json') as f:
+            pytecpiv_settings = json.load(f)
+
+        sources = pytecpiv_settings['sources']
+        sources = pd.DataFrame(sources)
+        sources_path = sources['sources_path'][0]
+        source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
+
+        message = '> Importing dng calibration images from ' + source_calib_path
+        self.d_print(message)
+
 
 if __name__ == '__main__':
     app_context = AppContext()  # 4. Instantiate the subclass
