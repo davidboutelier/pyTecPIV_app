@@ -1,2 +1,6 @@
-> 2020-06-11 13:52:04.510156
+> 2020-06-12 11:07:42.880837
 > Starting new instance of pytecpiv_app_0.0.1alpha
+> New project created: G:\PROJECTS\test96
+> Importing dng calibration images from G:\SOURCES\SUB\CALIB
+> Creating and populating directory G:\PROJECTS\test96\CALIB
+> 2 dng calibration images imported

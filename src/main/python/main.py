@@ -8,6 +8,9 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+# initialise global variables
+dataset_index = 0
+
 
 class dialog_conf():
     """
@@ -41,6 +44,7 @@ class dialog_conf():
 
         current_directory = os.getcwd()
         new_projects_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
+        new_projects_path = os.path.normpath(new_projects_path)
 
         if file_exist == 'yes':
             #  write in the file
@@ -90,6 +94,7 @@ class dialog_conf():
 
         current_directory = os.getcwd()
         new_sources_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
+        new_sources_path = os.path.normpath(new_sources_path)
 
         if file_exist == 'yes':
             #  write in the file
@@ -180,7 +185,7 @@ class AppContext(ApplicationContext):
         fig1 = plt.figure()
         ax1f1 = fig1.add_subplot(111)
         ax1f1.pcolor(X, Y, m)
-        ax1f1.quiver(X[::10,::10],Y[::10,::10],u[::10,::10],v[::10,::10], pivot='middle')
+        ax1f1.quiver(X[::10, ::10], Y[::10, ::10], u[::10, ::10], v[::10, ::10], pivot='middle')
         s1 = app_name + ' v.' + version
         s2 = 'build with Python 3 and:'
         s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib, pandas, pyqt'
@@ -251,6 +256,7 @@ class AppContext(ApplicationContext):
         # create a new directory
         this_project_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Create new project directory',
                                                              projects_path)
+        this_project_path = os.path.normpath(this_project_path)
 
         # create a time stamp
         this_project_create_time = str(datetime.now())
@@ -283,10 +289,15 @@ class AppContext(ApplicationContext):
         :return:
         """
         import json
+        import os
         import pandas as pd
         from PyQt5.QtWidgets import QFileDialog
-        # load the json file
+        from joblib import Parallel, delayed
+        from pytecpiv_import import convert_dng
 
+        global dataset_index
+
+        # load the json file
         with open('pytecpiv_settings.json') as f:
             pytecpiv_settings = json.load(f)
 
@@ -294,9 +305,52 @@ class AppContext(ApplicationContext):
         sources = pd.DataFrame(sources)
         sources_path = sources['sources_path'][0]
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
+        source_calib_path = os.path.normpath(source_calib_path)
 
         message = '> Importing dng calibration images from ' + source_calib_path
         self.d_print(message)
+
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
+        project_info = project_metadata['project']
+        project_info = pd.DataFrame(project_info)
+        project_root_path = project_info['project_root_path'][0]
+        project_name = project_info['project_name'][0]
+
+        calibration_folder = os.path.join(project_root_path, project_name, 'CALIB')
+        if os.path.isdir(calibration_folder):
+            message = '> Populating existing directory ' + calibration_folder
+            self.d_print(message)
+        else:
+            os.makedirs(calibration_folder)
+            message = '> Creating and populating directory ' + calibration_folder
+            self.d_print(message)
+
+        list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
+        num_img = len(list_img)   # get number of images in directory
+
+        use_cores = 2
+        Parallel(n_jobs=use_cores)(delayed(convert_dng)
+                                             (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
+                                              calibration_folder) for frame_num in range(0, num_img))
+
+        message = '> ' + str(num_img) + ' dng calibration images imported'
+        self.d_print(message)
+
+
+        project_metadata['data_sources'].append({'source_calibration': source_calib_path,
+                                                 'number_calibration_images': num_img})
+        # create dataset
+        if dataset_index != 0:
+            dataset_index = dataset_index + 1
+
+        # 0: name dataset
+        # 1: starting frame number
+
+        dataset = {(dataset_index, 0): 'calibration', (dataset_index, 1): 1}
+        print(dataset)
+        # with open('current_project_metadata.json', 'w') as outfile:
 
 
 if __name__ == '__main__':
