@@ -46,6 +46,9 @@ class dialog_conf():
         new_projects_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
         new_projects_path = os.path.normpath(new_projects_path)
 
+        # get value cores
+        core_fraction = self.Ui_DialogConf.SliderCores.value() / 100
+
         if file_exist == 'yes':
             #  write in the file
             with open('pytecpiv_settings.json') as f:
@@ -53,6 +56,8 @@ class dialog_conf():
 
             pytecpiv_settings['projects'] = []
             pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
+            pytecpiv_settings['parallel'] = []
+            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -65,6 +70,8 @@ class dialog_conf():
             pytecpiv_settings['sources'].append({'sources_path': ' '})
             pytecpiv_settings['projects'] = []
             pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
+            pytecpiv_settings['parallel'] = []
+            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -96,6 +103,9 @@ class dialog_conf():
         new_sources_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
         new_sources_path = os.path.normpath(new_sources_path)
 
+        # get value cores
+        core_fraction = self.Ui_DialogConf.SliderCores.value() / 100
+
         if file_exist == 'yes':
             #  write in the file
             with open('pytecpiv_settings.json') as f:
@@ -103,6 +113,8 @@ class dialog_conf():
 
             pytecpiv_settings['sources'] = []
             pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
+            pytecpiv_settings['parallel'] = []
+            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -115,6 +127,9 @@ class dialog_conf():
             pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
             pytecpiv_settings['projects'] = []
             pytecpiv_settings['projects'].append({'projects_path': ' '})
+            pytecpiv_settings['parallel'] = []
+            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
+
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -307,6 +322,10 @@ class AppContext(ApplicationContext):
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_calib_path = os.path.normpath(source_calib_path)
 
+        parallel_conf = pytecpiv_settings['parallel']
+        parallel_conf = pd.DataFrame(parallel_conf)
+        fraction_core = parallel_conf['core-fraction'][0]
+
         message = '> Importing dng calibration images from ' + source_calib_path
         self.d_print(message)
 
@@ -330,7 +349,10 @@ class AppContext(ApplicationContext):
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
         num_img = len(list_img)   # get number of images in directory
 
-        use_cores = 2
+        # get number of available core
+        available_cores = os.cpu_count()
+        use_cores = int(fraction_core * available_cores)
+
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                              (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
                                               calibration_folder) for frame_num in range(0, num_img))
@@ -338,17 +360,13 @@ class AppContext(ApplicationContext):
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
 
-
         project_metadata['data_sources'].append({'source_calibration': source_calib_path,
                                                  'number_calibration_images': num_img})
         # create dataset
         if dataset_index != 0:
             dataset_index = dataset_index + 1
 
-        # 0: name dataset
-        # 1: starting frame number
-
-        dataset = {(dataset_index, 0): 'calibration', (dataset_index, 1): 1}
+        dataset = {'name': 'calibration', 'starting_frame': 1}
         print(dataset)
         # with open('current_project_metadata.json', 'w') as outfile:
 
