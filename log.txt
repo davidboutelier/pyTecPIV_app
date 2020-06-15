@@ -1,8 +1,9 @@
-> 2020-06-12 13:55:55.590702
+> 2020-06-15 14:53:54.872515
 > Starting new instance of pytecpiv_app_0.0.1alpha
-> New projects path written in file pytecpiv_settings.json
-> New projects path is: /Volumes/SSD/PROJECTS
-> New project created: /Volumes/SSD/PROJECTS/test4
-> Importing dng calibration images from /Volumes/SSD/SOURCES/SUB/EXP
-> Creating and populating directory /Volumes/SSD/PROJECTS/test4/CALIB
-> 151 dng calibration images imported
+> New project created: /media/dpb509/SSD/PROJECTS/test2
+> Importing dng calibration images from /media/dpb509/SSD/SOURCES/SUB/CALIB
+> Creating and populating directory /media/dpb509/SSD/PROJECTS/test2/CALIB
+> 2 dng calibration images imported
+> Importing dng calibration images from /media/dpb509/SSD/SOURCES/SUB/EXP
+> Creating and populating directory /media/dpb509/SSD/PROJECTS/test2/EXP
+> 151 dng experimental images imported

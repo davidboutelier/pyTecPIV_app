@@ -9,8 +9,16 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 
 # initialise global variables
+current_dataset_name = 'credits'
 dataset_index = 0
 
+time_step = 1
+time_unit = 's'
+
+scale = 1
+phys_unit = 'mm'
+
+display_settings = {}
 
 class dialog_conf():
     """
@@ -54,10 +62,9 @@ class dialog_conf():
             with open('pytecpiv_settings.json') as f:
                 pytecpiv_settings = json.load(f)
 
-            pytecpiv_settings['projects'] = []
-            pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
-            pytecpiv_settings['parallel'] = []
-            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
+            pytecpiv_settings['projects'] = {'projects_path': new_projects_path}
+            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
+
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -66,12 +73,9 @@ class dialog_conf():
             message = '> Creating configuration file: pytecpiv_settings.json'
             app_context.d_print(message)
 
-            pytecpiv_settings = {'sources': []}
-            pytecpiv_settings['sources'].append({'sources_path': ' '})
-            pytecpiv_settings['projects'] = []
-            pytecpiv_settings['projects'].append({'projects_path': new_projects_path})
-            pytecpiv_settings['parallel'] = []
-            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
+            pytecpiv_settings = {'sources': {'sources_path': ' '}, 'projects': {'projects_path': new_projects_path},
+                                 'parallel': {'core-fraction': core_fraction}}
+
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
@@ -111,24 +115,22 @@ class dialog_conf():
             with open('pytecpiv_settings.json') as f:
                 pytecpiv_settings = json.load(f)
 
-            pytecpiv_settings['sources'] = []
-            pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
-            pytecpiv_settings['parallel'] = []
-            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
+            pytecpiv_settings['sources'] = {'sources_path': new_sources_path}
+            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
+
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
         else:
+            with open('pytecpiv_settings.json') as f:
+                pytecpiv_settings = json.load(f)
             #  create the conf file and write in
             message = '> Creating configuration file: pytecpiv_settings.json'
             app_context.d_print(message)
 
-            pytecpiv_settings = {'sources': []}
-            pytecpiv_settings['sources'].append({'sources_path': new_sources_path})
-            pytecpiv_settings['projects'] = []
-            pytecpiv_settings['projects'].append({'projects_path': ' '})
-            pytecpiv_settings['parallel'] = []
-            pytecpiv_settings['parallel'].append({'core-fraction': core_fraction})
+            pytecpiv_settings['sources'] = {'sources_path': new_sources_path}
+            pytecpiv_settings['projects'] = {'projects_path': ' '}
+            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
 
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
@@ -166,6 +168,7 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
+        self.ui_main_window.import_exp_dng.triggered.connect(self.import_exp_img_dng)  # import calib img dng
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -280,12 +283,14 @@ class AppContext(ApplicationContext):
         (this_project_root_path, this_project_name) = os.path.split(this_project_path)
 
         # create a current project_metadata file
-        project_metadata = {'project': [], 'data_sources': []}
-        project_metadata['project'].append({
-            'project_root_path': this_project_root_path,
-            'project_name': this_project_name,
-            'project_create_time': this_project_create_time
-        })
+        project_metadata = {'project': {'project_root_path': this_project_root_path,
+                                        'project_name': this_project_name,
+                                        'project_create_time': this_project_create_time},
+                            'data_sources': {},
+                            'datasets': {},
+                            'calibration': {},
+                            'preprocessing': {},
+                            'PIV_settings': {}}
 
         with open('current_project_metadata.json', 'w') as outfile:
             json.dump(project_metadata, outfile)
@@ -309,22 +314,22 @@ class AppContext(ApplicationContext):
         from PyQt5.QtWidgets import QFileDialog
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
+        import imagesize
 
-        global dataset_index
+        global current_dataset_name, dataset_index, time_step, display_settings
 
         # load the json file
         with open('pytecpiv_settings.json') as f:
             pytecpiv_settings = json.load(f)
 
         sources = pytecpiv_settings['sources']
-        sources = pd.DataFrame(sources)
-        sources_path = sources['sources_path'][0]
+        sources_path = sources['sources_path']
+
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_calib_path = os.path.normpath(source_calib_path)
 
         parallel_conf = pytecpiv_settings['parallel']
-        parallel_conf = pd.DataFrame(parallel_conf)
-        fraction_core = parallel_conf['core-fraction'][0]
+        fraction_core = parallel_conf['core-fraction']
 
         message = '> Importing dng calibration images from ' + source_calib_path
         self.d_print(message)
@@ -333,9 +338,8 @@ class AppContext(ApplicationContext):
             project_metadata = json.load(f)
 
         project_info = project_metadata['project']
-        project_info = pd.DataFrame(project_info)
-        project_root_path = project_info['project_root_path'][0]
-        project_name = project_info['project_name'][0]
+        project_root_path = project_info['project_root_path']
+        project_name = project_info['project_name']
 
         calibration_folder = os.path.join(project_root_path, project_name, 'CALIB')
         if os.path.isdir(calibration_folder):
@@ -360,20 +364,150 @@ class AppContext(ApplicationContext):
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
 
-        project_metadata['data_sources'].append({'source_calibration': source_calib_path,
-                                                 'number_calibration_images': num_img})
-        # create dataset
-        if dataset_index != 0:
-            dataset_index = dataset_index + 1
+        project_metadata['data_sources'].update({'source_calibration': source_calib_path,
+                                                 'number_calibration_images': num_img,
+                                                 'calibration_image_format': 'dng'})
 
-        dataset = {'name': 'calibration', 'starting_frame': 1}
-        print(dataset)
-        # with open('current_project_metadata.json', 'w') as outfile:
+        img_width, img_height = imagesize.get(os.path.join(calibration_folder, 'IMG_0001.tif'))
+
+        # create dataset
+        current_dataset = {'starting_frame': 1,
+                           'number_frames': num_img,
+                           'image': 'yes',
+                           'vector': 'no',
+                           'scalar': 'no',
+                           'path_img': calibration_folder,
+                           'min_value_image': 0,
+                           'max_value_image': 1,
+                           'name_colormap': 'gray',
+                           'pixel_width': img_width,
+                           'pixel_height': img_height,
+                           'bit_depth': 16,
+                           'image_format': 'tif'}
+
+        this_dataset = {'calibration': current_dataset}
+        project_metadata['datasets'].update(this_dataset)
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        current_dataset_name = 'calibration'
+        dataset_index = dataset_index + 1
+
+        # update and change combobox
+        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), current_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
+        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
+
+    def import_exp_img_dng(self):
+        """
+        import dng images of calibration board
+        :return:
+        """
+        import json
+        import os
+        from PyQt5.QtWidgets import QFileDialog
+        from joblib import Parallel, delayed
+        from pytecpiv_import import convert_dng
+        import imagesize
+
+        global current_dataset_name, dataset_index, time_step, display_settings
+
+        # load the json file
+        with open('pytecpiv_settings.json') as f:
+            pytecpiv_settings = json.load(f)
+
+        sources = pytecpiv_settings['sources']
+        sources_path = sources['sources_path']
+
+        source_exp_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
+        source_exp_path = os.path.normpath(source_exp_path)
+
+        parallel_conf = pytecpiv_settings['parallel']
+        fraction_core = parallel_conf['core-fraction']
+
+        message = '> Importing dng calibration images from ' + source_exp_path
+        self.d_print(message)
+
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
+        project_info = project_metadata['project']
+        project_root_path = project_info['project_root_path']
+        project_name = project_info['project_name']
+
+        exp_folder = os.path.join(project_root_path, project_name, 'EXP')
+        if os.path.isdir(exp_folder):
+            message = '> Populating existing directory ' + exp_folder
+            self.d_print(message)
+        else:
+            os.makedirs(exp_folder)
+            message = '> Creating and populating directory ' + exp_folder
+            self.d_print(message)
+
+        list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
+        num_img = len(list_img)   # get number of images in directory
+
+        # get number of available core
+        available_cores = os.cpu_count()
+        use_cores = int(fraction_core * available_cores)
+
+        Parallel(n_jobs=use_cores)(delayed(convert_dng)
+                                             (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
+                                              exp_folder) for frame_num in range(0, num_img))
+
+        message = '> ' + str(num_img) + ' dng experimental images imported'
+        self.d_print(message)
+
+        img_width, img_height = imagesize.get(os.path.join(exp_folder,'IMG_0001.tif'))
+
+        project_metadata['data_sources'].update({'source_exp': source_exp_path,
+                                                 'number_exp_images': num_img,
+                                                 'exp_image_format': 'dng',
+                                                 'time_interval': time_step,
+                                                 'time_unit': time_unit,
+                                                 'time_interval_is_defined': 'no',
+                                                 'pixel_width': img_width,
+                                                 'pixel_height': img_height})
+        # create dataset
+        current_dataset = {'starting_frame': 1,
+                           'number_frames': num_img,
+                           'image': 'yes',
+                           'vector': 'no',
+                           'scalar': 'no',
+                           'path_img': exp_folder,
+                           'min_value_image': 0,
+                           'max_value_image': 1,
+                           'name_colormap': 'gray',
+                           'pixel_width': img_width,
+                           'pixel_height': img_height,
+                           'bit_depth': 16,
+                           'image_format': 'tif'}
+        this_dataset = {'experiment': current_dataset}
+        project_metadata['datasets'].update(this_dataset)
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        current_dataset_name = 'experiment'
+        dataset_index = dataset_index + 1
+
+        # populate the display_settings dictionary
+        display_settings.update({'dataset_name': current_dataset_name})
+
+        # update and change combobox
+        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), current_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
+        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
+
+        self.rm_mpl() # clear the plotting area
 
 
 if __name__ == '__main__':
     app_context = AppContext()  # 4. Instantiate the subclass
-
     exit_code = app_context.run()  # 5. Invoke run()
-
     sys.exit(exit_code)
