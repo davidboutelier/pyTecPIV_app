@@ -20,6 +20,7 @@ phys_unit = 'mm'
 
 display_settings = {}
 
+
 class dialog_conf():
     """
     Class for the objects in the dialog window for configuration of pyTecPIV
@@ -162,7 +163,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.menubar = self.ui_main_window.menuBar()
         self.ui_main_window.menubar.setNativeMenuBar(False)
 
-        #  define callbacks here
+        #  define the callbacks here
         self.ui_main_window.actionConfiguration.triggered.connect(self.show_conf_fn)  # menu settings
         self.dialog_conf = dialog_conf()
 
@@ -186,19 +187,12 @@ class AppContext(ApplicationContext):
         import numpy as np
         x = np.linspace(0, 1, num=101)
         y = np.linspace(0, 1, num=101)
-        dx = x[1] - x[0]
         X, Y = np.meshgrid(x, y)
         theta = np.arctan2(Y-0.5, X-0.5)
         rho = np.sqrt((X-0.5) ** 2 + (Y-0.5) ** 2)
         u = rho * np.sin(theta)
         v = rho * np.cos(theta)
-
-        dudx, dudy = np.gradient(u, 2) / dx
-        dvdx, dvdy = np.gradient(v, 2) / dx
-
-        omega = dvdx - dudy
         m = np.sqrt(u ** 2 + v ** 2)
-
 
         fig1 = plt.figure()
         ax1f1 = fig1.add_subplot(111)
