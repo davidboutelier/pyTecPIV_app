@@ -20,6 +20,10 @@ phys_unit = 'mm'
 
 display_settings = {}
 
+fig1 = plt.figure()
+version = ''
+app_name = ''
+
 
 class dialog_conf():
     """
@@ -153,6 +157,8 @@ class AppContext(ApplicationContext):
         super().__init__()
 
     def run(self):
+        global version, app_name
+
         #  import ui from QtDesigner ui file
         self.ui_main_window = uic.loadUi(os.path.join('src', 'build', 'ui', 'gui.ui'))
         version = self.build_settings['version']
@@ -170,6 +176,8 @@ class AppContext(ApplicationContext):
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
         self.ui_main_window.import_exp_dng.triggered.connect(self.import_exp_img_dng)  # import calib img dng
+
+        self.ui_main_window.Dataset_comboBox.currentIndexChanged.connect(self.dataset_combobox_fn)
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -304,11 +312,11 @@ class AppContext(ApplicationContext):
         """
         import json
         import os
-        import pandas as pd
         from PyQt5.QtWidgets import QFileDialog
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
         import imagesize
+        from tqdm import tqdm
 
         global current_dataset_name, dataset_index, time_step, display_settings
 
@@ -353,7 +361,7 @@ class AppContext(ApplicationContext):
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                              (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
-                                              calibration_folder) for frame_num in range(0, num_img))
+                                              calibration_folder) for frame_num in tqdm(range(0, num_img)))
 
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
@@ -395,6 +403,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
 
+
     def import_exp_img_dng(self):
         """
         import dng images of calibration board
@@ -406,6 +415,7 @@ class AppContext(ApplicationContext):
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
         import imagesize
+        from tqdm import tqdm
 
         global current_dataset_name, dataset_index, time_step, display_settings
 
@@ -450,7 +460,7 @@ class AppContext(ApplicationContext):
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                              (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
-                                              exp_folder) for frame_num in range(0, num_img))
+                                              exp_folder) for frame_num in tqdm(range(0, num_img)))
 
         message = '> ' + str(num_img) + ' dng experimental images imported'
         self.d_print(message)
@@ -498,7 +508,79 @@ class AppContext(ApplicationContext):
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
 
-        self.rm_mpl() # clear the plotting area
+
+    def dataset_combobox_fn(self):
+        import json
+        global dataset_index, version, app_name
+        from pytecpiv_display import create_fig
+
+        self.rm_mpl()  # clear the plotting area
+
+        dataset_index = self.ui_main_window.Dataset_comboBox.currentIndex()
+        print(dataset_index)
+
+        if dataset_index == 0:
+            print('displaying the credits')
+            #  remake first credit figure
+            import numpy as np
+            x = np.linspace(0, 1, num=101)
+            y = np.linspace(0, 1, num=101)
+            X, Y = np.meshgrid(x, y)
+            theta = np.arctan2(Y - 0.5, X - 0.5)
+            rho = np.sqrt((X - 0.5) ** 2 + (Y - 0.5) ** 2)
+            u = rho * np.sin(theta)
+            v = rho * np.cos(theta)
+            m = np.sqrt(u ** 2 + v ** 2)
+
+            fig1 = plt.figure()
+            ax1f1 = fig1.add_subplot(111)
+            ax1f1.pcolor(X, Y, m)
+            ax1f1.quiver(X[::10, ::10], Y[::10, ::10], u[::10, ::10], v[::10, ::10], pivot='middle')
+            s1 = app_name + ' v.' + version
+            s2 = 'build with Python 3 and:'
+            s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib, pandas, pyqt'
+
+            s5 = 'D. Boutelier, 2020'
+            ax1f1.margins(0, 0, tight=True)
+            ax1f1.set_ylim([-0.10, 1.1])
+            ax1f1.set_xlim([-0.1, 1.1])
+            ax1f1.text(0.01, 0.95, s1, fontsize=18, backgroundcolor='w', color='k', fontweight='bold')
+            ax1f1.text(0.01, 0.9, s2, fontsize=10, backgroundcolor='w', color='b')
+            ax1f1.text(0.01, 0.85, s3, fontsize=10, backgroundcolor='w', color='b')
+            ax1f1.text(0.01, 0.8, s5, fontsize=9, backgroundcolor='w', color='b')
+            ax1f1.set_aspect('equal')
+            ax1f1.set_axis_off()
+
+            self.add_mpl(fig1)
+
+        else:
+            this_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
+            #print('displaying the dataset: ' + this_dataset_name)
+
+            with open('current_project_metadata.json') as f:
+                project_metadata = json.load(f)
+
+            datasets = project_metadata['datasets']
+            this_dataset = datasets[this_dataset_name]
+
+            start_frame = this_dataset['starting_frame']
+            end_frame = this_dataset['starting_frame']
+
+            current_frame_number = int(self.ui_main_window.frame_text.text())
+
+            if current_frame_number < start_frame:
+                current_frame_number = start_frame
+
+            if current_frame_number > end_frame:
+                current_frame_number = end_frame
+
+            #print('displaying frame: ' + str(current_frame_number))
+
+            self.rm_mpl()  # clear the plotting area
+            display_settings = {'dataset_name': this_dataset_name, 'frame_num': current_frame_number}
+            fig1 = plt.figure()
+            fig1 = create_fig(fig1, display_settings)
+            self.add_mpl(fig1)
 
 
 if __name__ == '__main__':

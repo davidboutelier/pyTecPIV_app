@@ -1,9 +1,9 @@
-> 2020-06-23 10:05:51.065995
+> 2020-06-24 16:50:02.930199
 > Starting new instance of pytecpiv_app_0.0.1alpha
-> New project created: /Users/dpb509/Documents/PIV/PROJECTS/test2
-> Importing dng calibration images from /Users/dpb509/Documents/PIV/SOURCES/MINI/CALIB
-> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test2/CALIB
-> 1 dng calibration images imported
-> Importing dng calibration images from /Users/dpb509/Documents/PIV/SOURCES/MINI/EXP
-> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test2/EXP
-> 4 dng experimental images imported
+> New project created: /media/dpb509/SSD/PROJECTS/test20
+> Importing dng calibration images from /media/dpb509/SSD/SOURCES/SUB/CALIB
+> Creating and populating directory /media/dpb509/SSD/PROJECTS/test20/CALIB
+> 2 dng calibration images imported
+> Importing dng calibration images from /media/dpb509/SSD/SOURCES/SUB/EXP
+> Creating and populating directory /media/dpb509/SSD/PROJECTS/test20/EXP
+> 151 dng experimental images imported
