@@ -8,7 +8,7 @@ def create_fig(fig1, plot_settings):
     dataset_name = plot_settings['dataset_name']
     disp_frame_num = plot_settings['frame_num']
 
-    print('displaying frame ' + str(disp_frame_num) + ' from dataset '+dataset_name)
+    #print('displaying frame ' + str(disp_frame_num) + ' from dataset '+dataset_name)
 
     with open('current_project_metadata.json') as f:
         project_metadata = json.load(f)
@@ -20,10 +20,10 @@ def create_fig(fig1, plot_settings):
     disp_vector = this_dataset['vector']
     disp_scalar = this_dataset['scalar']
     start_frame = this_dataset['starting_frame']
-    end_frame = this_dataset['starting_frame']
+    end_frame = int(start_frame + this_dataset['number_frames'] -1)
 
     if disp_image == 'yes':
-        print('display image only')
+        #print('display image only')
         img_path = this_dataset['path_img']
         name_colormap = this_dataset['name_colormap']
 
