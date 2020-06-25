@@ -178,6 +178,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.import_exp_dng.triggered.connect(self.import_exp_img_dng)  # import calib img dng
 
         self.ui_main_window.Dataset_comboBox.currentIndexChanged.connect(self.dataset_combobox_fn)
+        self.ui_main_window.FrameUpPushButton.clicked.connect(self.plus_frame)
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -403,7 +404,6 @@ class AppContext(ApplicationContext):
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
 
-
     def import_exp_img_dng(self):
         """
         import dng images of calibration board
@@ -508,7 +508,6 @@ class AppContext(ApplicationContext):
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
 
-
     def dataset_combobox_fn(self):
         import json
         global dataset_index, version, app_name
@@ -582,6 +581,38 @@ class AppContext(ApplicationContext):
             fig1 = create_fig(fig1, display_settings)
             self.add_mpl(fig1)
 
+    def plus_frame(self):
+        import json
+        from pytecpiv_display import create_fig
+
+        dataset_index = self.ui_main_window.Dataset_comboBox.currentIndex()
+
+        if dataset_index != 0:
+            this_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
+            with open('current_project_metadata.json') as f:
+                project_metadata = json.load(f)
+
+            datasets = project_metadata['datasets']
+            this_dataset = datasets[this_dataset_name]
+
+            start_frame = this_dataset['starting_frame']
+            end_frame = this_dataset['starting_frame']
+
+            current_frame_number = int(self.ui_main_window.frame_text.text())
+            new_frame_number = int(current_frame_number + 1)
+
+            if new_frame_number < start_frame:
+                new_frame_number = start_frame
+
+            if new_frame_number > end_frame:
+                new_frame_number = end_frame
+
+            if new_frame_number != current_frame_number:
+                self.rm_mpl()  # clear the plotting area
+                display_settings = {'dataset_name': this_dataset_name, 'frame_num': new_frame_number}
+                fig1 = plt.figure()
+                fig1 = create_fig(fig1, display_settings)
+                self.add_mpl(fig1)
 
 if __name__ == '__main__':
     app_context = AppContext()  # 4. Instantiate the subclass
