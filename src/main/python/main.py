@@ -25,6 +25,15 @@ version = ''
 app_name = ''
 
 
+class dialog_image():
+    def __init__(self):
+        super().__init__()
+        self.Ui_DialogImage = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_image.ui'))
+        self.Ui_DialogImage.setWindowTitle('image properties')
+
+        # call back here
+
+
 class dialog_conf():
     """
     Class for the objects in the dialog window for configuration of pyTecPIV
@@ -149,6 +158,7 @@ class dialog_conf():
         message = '> New sources path is: ' + new_sources_path
         app_context.d_print(message)
 
+
 class AppContext(ApplicationContext):
     """
 
@@ -172,6 +182,9 @@ class AppContext(ApplicationContext):
         #  define the callbacks here
         self.ui_main_window.actionConfiguration.triggered.connect(self.show_conf_fn)  # menu settings
         self.dialog_conf = dialog_conf()
+
+        self.ui_main_window.Img_pushButton.clicked.connect(self.show_image_dialog)
+        self.dialog_image = dialog_image()
 
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
@@ -210,7 +223,7 @@ class AppContext(ApplicationContext):
         ax1f1.quiver(X[::10, ::10], Y[::10, ::10], u[::10, ::10], v[::10, ::10], pivot='middle')
         s1 = app_name + ' v.' + version
         s2 = 'build with Python 3 and:'
-        s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib, pandas, pyqt'
+        s3 = 'numpy, scikit-image, rawpy, json, hdf5, matplotlib, pyqt'
 
         s5 = 'D. Boutelier, 2020'
         ax1f1.margins(0, 0, tight=True)
@@ -260,6 +273,9 @@ class AppContext(ApplicationContext):
         self.dialog_conf.Ui_DialogConf.sources_label.setText(sources_path)
         self.dialog_conf.Ui_DialogConf.projects_label.setText(projects_path)
         self.dialog_conf.Ui_DialogConf.show()
+
+    def show_image_dialog(self):
+        self.dialog_image.Ui_DialogImage.show()
 
     def new_project(self):
         """
