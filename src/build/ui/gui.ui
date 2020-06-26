@@ -17,6 +17,9 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
+      <property name="spacing">
+       <number>-1</number>
+      </property>
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
@@ -38,21 +41,27 @@
           <height>35</height>
          </size>
         </property>
+        <property name="currentText">
+         <string>licence &amp; credits</string>
+        </property>
         <item>
          <property name="text">
-          <string>Licence &amp; credits</string>
+          <string>licence &amp; credits</string>
          </property>
         </item>
        </widget>
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="spacing">
+         <number>-1</number>
+        </property>
         <item>
          <widget class="QLabel" name="time_label">
           <property name="minimumSize">
            <size>
             <width>35</width>
-            <height>0</height>
+            <height>25</height>
            </size>
           </property>
           <property name="maximumSize">
@@ -63,6 +72,9 @@
           </property>
           <property name="text">
            <string>Time:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -84,7 +96,7 @@
            <string>0</string>
           </property>
           <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
           </property>
          </widget>
         </item>
@@ -133,6 +145,9 @@
           <property name="text">
            <string>Frame:</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
          </widget>
         </item>
         <item>
@@ -152,10 +167,19 @@
           <property name="text">
            <string>0</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QPushButton" name="FrameDownPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -169,6 +193,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="FrameUpPushButton">
+          <property name="minimumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>20</width>
@@ -184,6 +214,9 @@
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <property name="spacing">
+         <number>-1</number>
+        </property>
         <item>
          <widget class="QLabel" name="label_2">
           <property name="text">
@@ -199,10 +232,16 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="maximumSize">
+          <property name="minimumSize">
            <size>
             <width>25</width>
             <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
            </size>
           </property>
           <property name="text">
@@ -214,6 +253,9 @@
       </item>
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <property name="spacing">
+         <number>-1</number>
+        </property>
         <item>
          <widget class="QLabel" name="label_3">
           <property name="text">
@@ -229,10 +271,16 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="maximumSize">
+          <property name="minimumSize">
            <size>
             <width>25</width>
             <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
            </size>
           </property>
           <property name="text">
@@ -259,10 +307,16 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="maximumSize">
+          <property name="minimumSize">
            <size>
             <width>25</width>
             <height>25</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>20</height>
            </size>
           </property>
           <property name="text">
@@ -296,7 +350,7 @@
         <property name="minimumSize">
          <size>
           <width>300</width>
-          <height>0</height>
+          <height>400</height>
          </size>
         </property>
         <property name="maximumSize">
@@ -371,6 +425,7 @@
     </widget>
     <addaction name="menuImport_Calibration_image"/>
     <addaction name="menuImport_Experimental_images"/>
+    <addaction name="actionDefine_time_interval"/>
    </widget>
    <widget class="QMenu" name="menuPreprocessing">
     <property name="title">
@@ -523,6 +578,11 @@
   <action name="import_exp_tif">
    <property name="text">
     <string>tif</string>
+   </property>
+  </action>
+  <action name="actionDefine_time_interval">
+   <property name="text">
+    <string>Define time interval</string>
    </property>
   </action>
  </widget>

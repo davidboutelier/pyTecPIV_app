@@ -14,6 +14,7 @@ dataset_index = 0
 
 time_step = 1
 time_unit = 's'
+time_is_defined = False
 
 scale = 1
 phys_unit = 'mm'
@@ -103,11 +104,37 @@ class dialog_image():
             app_context.add_mpl(fig1)
 
 
+class dialog_time():
+    def __init__(self):
+        super().__init__()
+        self.Ui_DialogTime = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_time.ui'))
+        self.Ui_DialogTime.setWindowTitle('time')
 
+        # callback here
+        self.Ui_DialogTime.time_unit_comboBox.currentIndexChanged.connect(self.time_changed)
+        self.Ui_DialogTime.time_value_comboBox.currentIndexChanged.connect(self.time_changed)
 
+    def time_changed(self):
+        import json
+        global time_unit, time_step, time_is_defined
 
+        #read the values
+        time_step = float(self.Ui_DialogTime.time_value_comboBox.currentText())
+        time_unit = self.Ui_DialogTime.time_unit_comboBox.currentText()
+        time_is_defined = True
 
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
 
+        sources = project_metadata['data_sources']
+        sources['time_interval'] = time_step
+        sources['time_unit'] = time_unit
+        sources['time_interval_is_defined'] = time_is_defined
+
+        project_metadata['data_sources'] = sources
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
 
 
 
@@ -263,6 +290,9 @@ class AppContext(ApplicationContext):
         self.ui_main_window.Img_pushButton.clicked.connect(self.show_image_dialog)
         self.dialog_image = dialog_image()
 
+        self.ui_main_window.actionDefine_time_interval.triggered.connect(self.show_time)
+        self.dialog_time = dialog_time()
+
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
         self.ui_main_window.import_exp_dng.triggered.connect(self.import_exp_img_dng)  # import calib img dng
@@ -338,6 +368,9 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.mplvl.removeWidget(self.figure_toolbar)
         self.figure_toolbar.close()
+
+    def show_time(self):
+        self.dialog_time.Ui_DialogTime.show()
 
     def show_conf_fn(self):
         """This function makes visible the dialogue box for the configuration"""
@@ -678,7 +711,6 @@ class AppContext(ApplicationContext):
     def plus_frame(self):
         import json
         from pytecpiv_display import create_fig
-        global time_step
 
         dataset_index = self.ui_main_window.Dataset_comboBox.currentIndex()
 
@@ -686,6 +718,10 @@ class AppContext(ApplicationContext):
             this_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
             with open('current_project_metadata.json') as f:
                 project_metadata = json.load(f)
+
+            sources = project_metadata['data_sources']
+            time_step = float(sources['time_interval'])
+            time_unit = sources['time_unit']
 
             datasets = project_metadata['datasets']
             this_dataset = datasets[this_dataset_name]
@@ -721,6 +757,10 @@ class AppContext(ApplicationContext):
             this_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
             with open('current_project_metadata.json') as f:
                 project_metadata = json.load(f)
+
+            sources = project_metadata['data_sources']
+            time_step = float(sources['time_interval'])
+            time_unit = sources['time_unit']
 
             datasets = project_metadata['datasets']
             this_dataset = datasets[this_dataset_name]

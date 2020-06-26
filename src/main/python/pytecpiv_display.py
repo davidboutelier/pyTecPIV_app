@@ -13,6 +13,9 @@ def create_fig(fig1, plot_settings):
     with open('current_project_metadata.json') as f:
         project_metadata = json.load(f)
 
+ #   sources = project_metadata['data_sources']
+ #   time_step = float(sources['time_interval'])
+ #   time_unit = sources['time_unit']
     datasets = project_metadata['datasets']
     this_dataset = datasets[dataset_name]
 
