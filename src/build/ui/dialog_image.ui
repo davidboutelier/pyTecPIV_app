@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
@@ -24,7 +24,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <widget class="QCheckBox" name="checkBox">
+     <widget class="QCheckBox" name="disp_img_checkBox">
       <property name="text">
        <string>display image</string>
       </property>
@@ -63,25 +63,125 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_2">
         <item>
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="img_min_val_comboBox">
           <item>
            <property name="text">
-            <string>0</string>
+            <string>0.0</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.1</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.2</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.3</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.4</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.5</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.6</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.7</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.8</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.9</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>1.0</string>
            </property>
           </item>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_2">
+         <widget class="QComboBox" name="img_max_val_comboBox">
           <item>
            <property name="text">
-            <string>1</string>
+            <string>1.0</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.9</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.8</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.7</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.6</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.5</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.4</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.3</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.2</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.1</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>0.0</string>
            </property>
           </item>
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="comboBox_3">
+         <widget class="QComboBox" name="img_cmap_comboBox">
           <property name="minimumSize">
            <size>
             <width>200</width>
@@ -91,6 +191,41 @@
           <item>
            <property name="text">
             <string>gray</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>viridis</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>magma</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>plasma</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>inferno</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>cividis</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Spectral</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>coolwarm</string>
            </property>
           </item>
          </widget>

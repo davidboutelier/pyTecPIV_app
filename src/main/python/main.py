@@ -32,6 +32,83 @@ class dialog_image():
         self.Ui_DialogImage.setWindowTitle('image properties')
 
         # call back here
+        self.Ui_DialogImage.disp_img_checkBox.stateChanged.connect(self.change_image_prop)
+        self.Ui_DialogImage.img_cmap_comboBox.currentIndexChanged.connect(self.change_image_prop)
+        self.Ui_DialogImage.img_max_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
+        self.Ui_DialogImage.img_min_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
+
+    def change_image_prop(self):
+        import json
+        from pytecpiv_display import create_fig
+        current_frame_number = int(app_context.ui_main_window.frame_text.text())
+        dataset_index = int(app_context.ui_main_window.Dataset_comboBox.currentIndex())
+        print(dataset_index)
+        if dataset_index != 0:
+            this_dataset_name = app_context.ui_main_window.Dataset_comboBox.currentText()
+            with open('current_project_metadata.json') as f:
+                project_metadata = json.load(f)
+
+
+            datasets = project_metadata['datasets']
+            this_dataset = datasets[this_dataset_name]
+
+            display_image = this_dataset['image']
+            image_colormap = this_dataset['name_colormap']
+            min_image_value = this_dataset['min_value_image']
+            max_image_value = this_dataset['max_value_image']
+
+            new_display_image = self.Ui_DialogImage.disp_img_checkBox.isChecked()
+            new_image_colormap = self.Ui_DialogImage.img_cmap_comboBox.currentText()
+            new_image_min_value = float(self.Ui_DialogImage.img_min_val_comboBox.currentText())
+            new_image_max_value = float(self.Ui_DialogImage.img_max_val_comboBox.currentText())
+
+            if new_image_max_value <= new_image_min_value:
+                if new_image_max_value == 1:
+                    new_image_min_value = 0.9
+                    self.Ui_DialogImage.img_min_val_comboBox.setCurrentText(str(new_image_min_value))
+                else:
+                    if new_image_min_value == 0:
+                        new_image_max_value = 0.1
+                        self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
+                    else:
+                        new_image_max_value = new_image_min_value+0.1
+                        self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
+
+            if this_dataset_name in ['calibration', 'experiment']:
+                if not new_display_image:
+                    self.Ui_DialogImage.disp_img_checkBox.setChecked(True)
+                new_display_image = 'yes'
+            else:
+                if not new_display_image:
+                    new_display_image = 'no'
+                else:
+                    new_display_image = 'yes'
+
+            # enter new values in dataset
+            this_dataset['image'] = new_display_image
+            this_dataset['name_colormap'] = new_image_colormap
+            this_dataset['min_value_image'] = new_image_min_value
+            this_dataset['max_value_image'] = new_image_max_value
+            datasets[this_dataset_name] = this_dataset
+            project_metadata['datasets'] = datasets
+
+            with open('current_project_metadata.json', 'w') as outfile:
+                json.dump(project_metadata, outfile)
+
+            # now redraw the image
+            app_context.rm_mpl()  # clear the plotting area
+            display_settings = {'dataset_name': this_dataset_name, 'frame_num': current_frame_number}
+            fig1 = plt.figure()
+            fig1 = create_fig(fig1, display_settings)
+            app_context.add_mpl(fig1)
+
+
+
+
+
+
+
+
 
 
 class dialog_conf():

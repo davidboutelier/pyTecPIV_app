@@ -22,14 +22,17 @@ def create_fig(fig1, plot_settings):
     start_frame = this_dataset['starting_frame']
     end_frame = int(start_frame + this_dataset['number_frames'] -1)
 
+
     if disp_image == 'yes':
         #print('display image only')
         img_path = this_dataset['path_img']
         name_colormap = this_dataset['name_colormap']
+        img_min_val = float(this_dataset['min_value_image'])
+        img_max_val = float(this_dataset['max_value_image'])
 
         ax1f1 = fig1.add_subplot(111)
         img = img_as_float(io.imread(os.path.join(img_path, 'IMG_'+str(disp_frame_num).zfill(4)+'.tif')))
-        ax1f1.imshow(img, cmap=name_colormap)
+        ax1f1.imshow(img, cmap=name_colormap, vmin=img_min_val, vmax=img_max_val)
         ax1f1.set_aspect('equal')
 
         if disp_scalar == 'yes':
