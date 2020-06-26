@@ -438,9 +438,30 @@
     <property name="title">
      <string>Calibration</string>
     </property>
+    <widget class="QMenu" name="menuRectification">
+     <property name="title">
+      <string>Rectification</string>
+     </property>
+     <widget class="QMenu" name="menuProjective_polynomial">
+      <property name="title">
+       <string>Projective + polynomial</string>
+      </property>
+      <addaction name="actiondegree_2"/>
+      <addaction name="actiondegree_3"/>
+     </widget>
+     <widget class="QMenu" name="menuPolynomial">
+      <property name="title">
+       <string>Polynomial</string>
+      </property>
+      <addaction name="actiondegree_4"/>
+      <addaction name="actiondegree_5"/>
+     </widget>
+     <addaction name="actionProjective_3"/>
+     <addaction name="menuPolynomial"/>
+     <addaction name="menuProjective_polynomial"/>
+    </widget>
     <addaction name="Calibration_board_menu"/>
-    <addaction name="rectification_menu"/>
-    <addaction name="find_rectification_menu"/>
+    <addaction name="menuRectification"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
     <property name="title">
@@ -545,11 +566,6 @@
     <string>Rectify</string>
    </property>
   </action>
-  <action name="rectification_menu">
-   <property name="text">
-    <string>Rectification function</string>
-   </property>
-  </action>
   <action name="find_rectification_menu">
    <property name="text">
     <string>Find function</string>
@@ -583,6 +599,36 @@
   <action name="actionDefine_time_interval">
    <property name="text">
     <string>Define time interval</string>
+   </property>
+  </action>
+  <action name="actionProjective">
+   <property name="text">
+    <string>Projective</string>
+   </property>
+  </action>
+  <action name="actionProjective_3">
+   <property name="text">
+    <string>Projective</string>
+   </property>
+  </action>
+  <action name="actiondegree_2">
+   <property name="text">
+    <string>degree 2</string>
+   </property>
+  </action>
+  <action name="actiondegree_3">
+   <property name="text">
+    <string>degree 3</string>
+   </property>
+  </action>
+  <action name="actiondegree_4">
+   <property name="text">
+    <string>degree 2</string>
+   </property>
+  </action>
+  <action name="actiondegree_5">
+   <property name="text">
+    <string>degree 3</string>
    </property>
   </action>
  </widget>

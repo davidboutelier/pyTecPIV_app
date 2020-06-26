@@ -2,5 +2,5 @@
     "app_name": "pytecpiv_app",
     "author": "D.Boutelier",
     "main_module": "src/main/python/main.py",
-    "version": "0.0.1alpha"
+    "version": "0.0.1alpha2"
 }

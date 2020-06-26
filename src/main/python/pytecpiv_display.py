@@ -13,9 +13,6 @@ def create_fig(fig1, plot_settings):
     with open('current_project_metadata.json') as f:
         project_metadata = json.load(f)
 
- #   sources = project_metadata['data_sources']
- #   time_step = float(sources['time_interval'])
- #   time_unit = sources['time_unit']
     datasets = project_metadata['datasets']
     this_dataset = datasets[dataset_name]
 
@@ -23,11 +20,10 @@ def create_fig(fig1, plot_settings):
     disp_vector = this_dataset['vector']
     disp_scalar = this_dataset['scalar']
     start_frame = this_dataset['starting_frame']
-    end_frame = int(start_frame + this_dataset['number_frames'] -1)
+    #end_frame = int(start_frame + this_dataset['number_frames'] -1)
 
+    if disp_image:
 
-    if disp_image == 'yes':
-        #print('display image only')
         img_path = this_dataset['path_img']
         name_colormap = this_dataset['name_colormap']
         img_min_val = float(this_dataset['min_value_image'])
@@ -35,23 +31,24 @@ def create_fig(fig1, plot_settings):
 
         ax1f1 = fig1.add_subplot(111)
         img = img_as_float(io.imread(os.path.join(img_path, 'IMG_'+str(disp_frame_num).zfill(4)+'.tif')))
+        img = (img - np.min(img)) / (np.max(img) - np.min(img))
         ax1f1.imshow(img, cmap=name_colormap, vmin=img_min_val, vmax=img_max_val)
         ax1f1.set_aspect('equal')
 
-        if disp_scalar == 'yes':
+        if disp_scalar:
             print('display scalar on top of image')
-            if disp_vector == 'yes':
+            if disp_vector:
                 print('display vector on top of image and scalar')
         else:
-            if disp_vector == 'yes':
+            if disp_vector:
                 print('display vector on top of image')
     else:
-        if disp_scalar == 'yes':
+        if disp_scalar:
             print('display scalar only')
-            if disp_vector == 'yes':
+            if disp_vector:
                 print('display vector on top of scalar')
         else:
-            if disp_vector == 'yes':
+            if disp_vector:
                 print('display vector only')
             else:
                 print('nothing to display')
