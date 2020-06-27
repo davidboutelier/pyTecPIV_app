@@ -18,3 +18,7 @@ First extremely incomplete version. No correlation yet.
 * import dng for calibration and experiment
 * change dataset
 * change frame number
+* change colormap and its limits
+
+#### 0.0.1alpha2
+* dialog window for selecting calibration board
