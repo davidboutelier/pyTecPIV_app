@@ -137,8 +137,7 @@ class dialog_time():
             json.dump(project_metadata, outfile)
 
 
-
-class dialog_conf():
+class dialog_conf:
     """
     Class for the objects in the dialog window for configuration of pyTecPIV
     """
@@ -263,6 +262,40 @@ class dialog_conf():
         app_context.d_print(message)
 
 
+class DialogCalibrationBoards:
+    """
+        Class for the objects in the dialog window for calibration boards
+    """
+
+    def __init__(self):
+        super().__init__()
+
+        self.UI_dialog_calibration_boards = uic.loadUi(os.path.join('src', 'build', 'ui',
+                                                                    'dialog_calibration_boards.ui'))
+        self.UI_dialog_calibration_boards.setWindowTitle('calibration boards')
+
+        import json
+        with open('calibration_boards.json') as f:
+            calibration_boards = json.load(f)
+
+        list_items = calibration_boards.keys()
+        self.UI_dialog_calibration_boards.calibration_borads_comboBox.addItems(list_items)
+
+        # call backs for dialog here
+        self.UI_dialog_calibration_boards.buttonBox.accepted.connect(
+            self.calibration_boards_accepted)
+        #self.Ui_DialogConf.set_projects_button.clicked.connect(self.set_projects_path)
+        #self.Ui_DialogConf.set_sources_button.clicked.connect(self.set_sources_path)
+
+    def calibration_boards_accepted(self):
+        """
+        reads the value of selected calibration boards
+        :return:
+        """
+        board_name = self.UI_dialog_calibration_boards.calibration_borads_comboBox.currentText()
+        print(board_name)
+        # To do: save in the metadata calibration key
+
 class AppContext(ApplicationContext):
     """
 
@@ -292,6 +325,9 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.actionDefine_time_interval.triggered.connect(self.show_time)
         self.dialog_time = dialog_time()
+
+        self.ui_main_window.Calibration_board_menu.triggered.connect(self.show_calibration_boards)
+        self.dialog_calibration_boards = DialogCalibrationBoards()
 
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
@@ -368,6 +404,9 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.mplvl.removeWidget(self.figure_toolbar)
         self.figure_toolbar.close()
+
+    def show_calibration_boards(self):
+        self.dialog_calibration_boards.UI_dialog_calibration_boards.show()
 
     def show_time(self):
         self.dialog_time.Ui_DialogTime.show()
