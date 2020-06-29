@@ -292,8 +292,24 @@ class DialogCalibrationBoards:
         reads the value of selected calibration boards
         :return:
         """
+        import json
         board_name = self.UI_dialog_calibration_boards.calibration_borads_comboBox.currentText()
         print(board_name)
+
+        with open('calibration_boards.json') as f:
+            calibration_boards = json.load(f)
+        selected_calibration_board = calibration_boards[board_name]
+
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
+        calibration_data = project_metadata['calibration']
+        calibration_data['board_name'] = board_name
+        calibration_data['nx'] = nx
+        calibration_data['ny'] = ny
+        calibration_data['sq_size'] = sq_size
+        calibration_data['phys_unit'] = phys_unit
+
         # To do: save in the metadata calibration key
 
 class AppContext(ApplicationContext):
