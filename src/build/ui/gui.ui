@@ -446,17 +446,17 @@
       <property name="title">
        <string>Projective + polynomial</string>
       </property>
-      <addaction name="actiondegree_2"/>
-      <addaction name="actiondegree_3"/>
+      <addaction name="action_proj_poly2"/>
+      <addaction name="action_proj_poly3"/>
      </widget>
      <widget class="QMenu" name="menuPolynomial">
       <property name="title">
        <string>Polynomial</string>
       </property>
-      <addaction name="actiondegree_4"/>
-      <addaction name="actiondegree_5"/>
+      <addaction name="action_poly2"/>
+      <addaction name="action_poly3"/>
      </widget>
-     <addaction name="actionProjective_3"/>
+     <addaction name="action_proj"/>
      <addaction name="menuPolynomial"/>
      <addaction name="menuProjective_polynomial"/>
     </widget>
@@ -606,27 +606,27 @@
     <string>Projective</string>
    </property>
   </action>
-  <action name="actionProjective_3">
+  <action name="action_proj">
    <property name="text">
     <string>Projective</string>
    </property>
   </action>
-  <action name="actiondegree_2">
+  <action name="action_proj_poly2">
    <property name="text">
     <string>degree 2</string>
    </property>
   </action>
-  <action name="actiondegree_3">
+  <action name="action_proj_poly3">
    <property name="text">
     <string>degree 3</string>
    </property>
   </action>
-  <action name="actiondegree_4">
+  <action name="action_poly2">
    <property name="text">
     <string>degree 2</string>
    </property>
   </action>
-  <action name="actiondegree_5">
+  <action name="action_poly3">
    <property name="text">
     <string>degree 3</string>
    </property>

@@ -284,8 +284,6 @@ class DialogCalibrationBoards:
         # call backs for dialog here
         self.UI_dialog_calibration_boards.buttonBox.accepted.connect(
             self.calibration_boards_accepted)
-        #self.Ui_DialogConf.set_projects_button.clicked.connect(self.set_projects_path)
-        #self.Ui_DialogConf.set_sources_button.clicked.connect(self.set_sources_path)
 
     def calibration_boards_accepted(self):
         """
@@ -299,6 +297,10 @@ class DialogCalibrationBoards:
         with open('calibration_boards.json') as f:
             calibration_boards = json.load(f)
         selected_calibration_board = calibration_boards[board_name]
+        nx = selected_calibration_board['nx']
+        ny = selected_calibration_board['ny']
+        square_size = selected_calibration_board['square_size']
+        phys_unit = selected_calibration_board['unit']
 
         with open('current_project_metadata.json') as f:
             project_metadata = json.load(f)
@@ -307,10 +309,13 @@ class DialogCalibrationBoards:
         calibration_data['board_name'] = board_name
         calibration_data['nx'] = nx
         calibration_data['ny'] = ny
-        calibration_data['sq_size'] = sq_size
+        calibration_data['sq_size'] = square_size
         calibration_data['phys_unit'] = phys_unit
 
-        # To do: save in the metadata calibration key
+        project_metadata['calibration'] = calibration_data
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
 
 class AppContext(ApplicationContext):
     """
@@ -352,6 +357,13 @@ class AppContext(ApplicationContext):
         self.ui_main_window.Dataset_comboBox.currentIndexChanged.connect(self.dataset_combobox_fn)
         self.ui_main_window.FrameUpPushButton.clicked.connect(self.plus_frame)
         self.ui_main_window.FrameDownPushButton.clicked.connect(self.minus_frame)
+
+        # selected rectification type
+        self.ui_main_window.action_proj.triggered.connect(self.rectification_proj)
+        self.ui_main_window.action_poly2.triggered.connect(self.rectification_poly2)
+        self.ui_main_window.action_poly3.triggered.connect(self.rectification_poly3)
+        self.ui_main_window.action_proj_poly3.triggered.connect(self.rectification_proj_poly3)
+        self.ui_main_window.action_proj_poly2.triggered.connect(self.rectification_proj_poly2)
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -400,6 +412,41 @@ class AppContext(ApplicationContext):
         self.ui_main_window.showMaximized()
         self.ui_main_window.show()
         return self.app.exec_()
+
+    def rectification_proj(self):
+        """
+        rectification with projective transformation
+        :return:
+        """
+        print('proj')
+
+    def rectification_poly2(self):
+        """
+        rectification with polynomila dgreee 2
+        :return:
+        """
+        print('poly2')
+
+    def rectification_poly3(self):
+        """
+        rectification with polynomila dgreee 3
+        :return:
+        """
+        print('poly3')
+
+    def rectification_proj_poly2(self):
+        """
+        rectification with projective transformation followed by polynomila dgreee 2
+        :return:
+        """
+        print('proj+poly2')
+
+    def rectification_proj_poly3(self):
+        """
+        rectification with projective transformation followed by polynomila dgreee 3
+        :return:
+        """
+        print('proj+poly3')
 
     def d_print(self, message):
         log_file = open('log.txt', 'a')
