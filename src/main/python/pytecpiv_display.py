@@ -8,8 +8,6 @@ def create_fig(fig1, plot_settings):
     dataset_name = plot_settings['dataset_name']
     disp_frame_num = plot_settings['frame_num']
 
-    #print('displaying frame ' + str(disp_frame_num) + ' from dataset '+dataset_name)
-
     with open('current_project_metadata.json') as f:
         project_metadata = json.load(f)
 

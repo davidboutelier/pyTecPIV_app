@@ -418,7 +418,101 @@ class AppContext(ApplicationContext):
         rectification with projective transformation
         :return:
         """
-        print('proj')
+        import numpy as np
+        import matplotlib.pyplot as plt
+        import json
+        from skimage import io
+        from skimage import img_as_float, img_as_uint
+        from skimage.feature import corner_harris, corner_subpix, corner_peaks
+        from skimage import transform as tf
+        from skimage.transform import warp
+        import pickle
+
+        self.ui_main_window.Dataset_comboBox.setCurrentText('calibration')
+
+        # get the calibration board
+        with open('current_project_metadata.json') as f:
+            project_data = json.load(f)
+        calibration = project_data['calibration']
+        nx = calibration['nx']
+        ny = calibration['ny']
+        square_size = calibration['sq_size']
+        phys_unit = calibration['phys_unit']
+
+        # user to provide the 4 corners points
+        points = plt.ginput(4)
+        points = np.asarray(points)
+        print(points)
+
+        # measure average distances
+        F = 0.7
+        LX = F * (0.5 * ((points[1, 0] - points[0, 0]) + (points[2, 0] - points[3, 0]))) / nx
+        LY = F * (0.5 * ((points[0, 1] - points[3, 1]) + (points[1, 1] - points[2, 1]))) / ny
+        AR = (0.5 * ((points[1, 0] - points[0, 0]) + (points[2, 0] - points[3, 0]))) / nx
+        + (0.5 * ((points[0, 1] - points[3, 1]) + (points[1, 1] - points[2, 1]))) / ny
+        AR = AR / square_size
+
+        print(LX, LY, AR)
+
+        # load image
+        project = project_data['project']
+        project_root_path = project['project_root_path']
+        project_name = project['project_name']
+
+        img = io.imread(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_0001.tif'))
+
+        Corrected4Corners = np.zeros(points.shape)
+
+        for i in range(0, 4):
+            y1 = np.int(points[i, 1] - LY / 2)
+            y2 = np.int(points[i, 1] + LY / 2)
+            x1 = np.int(points[i, 0] - LX / 2)
+            x2 = np.int(points[i, 0] + LX / 2)
+            cropped = img[y1:y2, x1:x2]
+            cropped2 = img_as_float(cropped)
+            cropped2 = (cropped2 - np.min(cropped2)) / (np.max(cropped2) - np.min(cropped2))
+            cropped2[cropped2 >= 0.5] = 1
+            cropped2[cropped2 < 0.5] = 0
+
+            coords = corner_peaks(corner_harris(cropped2, method='k', k=0.2, eps=1e-06, sigma=1), min_distance=5,
+                                  threshold_rel=0, num_peaks=1)
+            coords_subpix = corner_subpix(cropped2, coords, window_size=13)
+            Corrected4Corners[i, :] = coords_subpix + [x1, y1]
+
+        # find the arithmetic mean of the four corners
+        xm = 0.25 * (Corrected4Corners[0, 0] + Corrected4Corners[1, 0] + Corrected4Corners[2, 0] + Corrected4Corners[
+            3, 0])
+        ym = 0.25 * (Corrected4Corners[0, 1] + Corrected4Corners[1, 1] + Corrected4Corners[2, 1] + Corrected4Corners[
+            3, 1])
+
+        # subpix find center
+        cropped = img[np.int(ym - LY / 2):np.int(ym + LY / 2), np.int(xm - LX / 2):np.int(xm + LX / 2)]
+        cropped2 = img_as_float(cropped)
+        cropped2 = (cropped2 - np.min(cropped2)) / (np.max(cropped2) - np.min(cropped2))
+        cropped2[cropped2 >= 0.5] = 1
+        cropped2[cropped2 < 0.5] = 0
+        coords = corner_peaks(corner_harris(cropped2, method='eps'), min_distance=5, threshold_rel=0, num_peaks=1)
+        coords_subpix = corner_subpix(cropped2, coords, window_size=13)
+        xm = xm - LX / 2 + coords_subpix[0, 1]
+        ym = ym - LY / 2 + coords_subpix[0, 0]
+
+        # define the target position of the 4 corner points relative to the mean
+        W = (nx - 1) * square_size
+        H = (ny - 1) * square_size
+        p0 = [xm - AR * W / 2, ym + AR * H / 2]
+        p1 = [xm + AR * W / 2, ym + AR * H / 2]
+        p2 = [xm + AR * W / 2, ym - AR * H / 2]
+        p3 = [xm - AR * W / 2, ym - AR * H / 2]
+        dst = np.asarray([p0, p1, p2, p3])
+
+        tform_proj = tf.estimate_transform('projective', Corrected4Corners, dst)
+
+        # correct the calibration image
+        img_warped_proj = warp(img, tform_proj.inverse)
+        img_warped_proj = img_as_uint(img_warped_proj)
+        io.imsave(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_PROJ_1.tif'), img_warped_proj)
+
+
 
     def rectification_poly2(self):
         """
