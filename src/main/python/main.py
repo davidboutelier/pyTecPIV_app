@@ -49,7 +49,6 @@ class dialog_image():
             with open('current_project_metadata.json') as f:
                 project_metadata = json.load(f)
 
-
             datasets = project_metadata['datasets']
             this_dataset = datasets[this_dataset_name]
 
@@ -72,7 +71,7 @@ class dialog_image():
                         new_image_max_value = 0.1
                         self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
                     else:
-                        new_image_max_value = new_image_min_value+0.1
+                        new_image_max_value = new_image_min_value + 0.1
                         self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
 
             if this_dataset_name in ['calibration', 'experiment']:
@@ -118,7 +117,7 @@ class dialog_time():
         import json
         global time_unit, time_step, time_is_defined
 
-        #read the values
+        # read the values
         time_step = float(self.Ui_DialogTime.time_value_comboBox.currentText())
         time_unit = self.Ui_DialogTime.time_unit_comboBox.currentText()
         time_is_defined = True
@@ -321,6 +320,7 @@ class AppContext(ApplicationContext):
     """
 
     """
+
     def __init__(self):
         super().__init__()
 
@@ -371,7 +371,7 @@ class AppContext(ApplicationContext):
             os.remove('log.txt')
 
         #  startup message in log file and text browser
-        message = '> '+str(datetime.now())
+        message = '> ' + str(datetime.now())
         self.d_print(message)
 
         message = '> Starting new instance of pytecpiv_app_' + version
@@ -382,8 +382,8 @@ class AppContext(ApplicationContext):
         x = np.linspace(0, 1, num=101)
         y = np.linspace(0, 1, num=101)
         X, Y = np.meshgrid(x, y)
-        theta = np.arctan2(Y-0.5, X-0.5)
-        rho = np.sqrt((X-0.5) ** 2 + (Y-0.5) ** 2)
+        theta = np.arctan2(Y - 0.5, X - 0.5)
+        rho = np.sqrt((X - 0.5) ** 2 + (Y - 0.5) ** 2)
         u = rho * np.sin(theta)
         v = rho * np.cos(theta)
         m = np.sqrt(u ** 2 + v ** 2)
@@ -422,11 +422,11 @@ class AppContext(ApplicationContext):
         import matplotlib.pyplot as plt
         import json
         from skimage import io
-        from skimage import img_as_float, img_as_uint
-        from skimage.feature import corner_harris, corner_subpix, corner_peaks
+        from skimage import img_as_uint
         from skimage import transform as tf
         from skimage.transform import warp
         import pickle
+        from pytecpiv_rectif import find_control_point
 
         self.ui_main_window.Dataset_comboBox.setCurrentText('calibration')
 
@@ -461,40 +461,26 @@ class AppContext(ApplicationContext):
 
         img = io.imread(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_0001.tif'))
 
-        Corrected4Corners = np.zeros(points.shape)
+        corrected_corners = np.zeros(points.shape)
 
         for i in range(0, 4):
-            y1 = np.int(points[i, 1] - LY / 2)
-            y2 = np.int(points[i, 1] + LY / 2)
-            x1 = np.int(points[i, 0] - LX / 2)
-            x2 = np.int(points[i, 0] + LX / 2)
-            cropped = img[y1:y2, x1:x2]
-            cropped2 = img_as_float(cropped)
-            cropped2 = (cropped2 - np.min(cropped2)) / (np.max(cropped2) - np.min(cropped2))
-            cropped2[cropped2 >= 0.5] = 1
-            cropped2[cropped2 < 0.5] = 0
+            x = points[i, 0]
+            y = points[i, 1]
 
-            coords = corner_peaks(corner_harris(cropped2, method='k', k=0.2, eps=1e-06, sigma=1), min_distance=5,
-                                  threshold_rel=0, num_peaks=1)
-            coords_subpix = corner_subpix(cropped2, coords, window_size=13)
-            Corrected4Corners[i, :] = coords_subpix + [x1, y1]
+            dx = LX / 2
+            dy = LY / 2
+            [xp, yp] = find_control_point(img, x, y, dx, dy)
+            corrected_corners[i, :] = [xp, yp]
 
         # find the arithmetic mean of the four corners
-        xm = 0.25 * (Corrected4Corners[0, 0] + Corrected4Corners[1, 0] + Corrected4Corners[2, 0] + Corrected4Corners[
-            3, 0])
-        ym = 0.25 * (Corrected4Corners[0, 1] + Corrected4Corners[1, 1] + Corrected4Corners[2, 1] + Corrected4Corners[
-            3, 1])
-
-        # subpix find center
-        cropped = img[np.int(ym - LY / 2):np.int(ym + LY / 2), np.int(xm - LX / 2):np.int(xm + LX / 2)]
-        cropped2 = img_as_float(cropped)
-        cropped2 = (cropped2 - np.min(cropped2)) / (np.max(cropped2) - np.min(cropped2))
-        cropped2[cropped2 >= 0.5] = 1
-        cropped2[cropped2 < 0.5] = 0
-        coords = corner_peaks(corner_harris(cropped2, method='eps'), min_distance=5, threshold_rel=0, num_peaks=1)
-        coords_subpix = corner_subpix(cropped2, coords, window_size=13)
-        xm = xm - LX / 2 + coords_subpix[0, 1]
-        ym = ym - LY / 2 + coords_subpix[0, 0]
+        xm = int(0.25 * (corrected_corners[0, 0]
+                         + corrected_corners[1, 0]
+                         + corrected_corners[2, 0]
+                         + corrected_corners[3, 0]))
+        ym = int(0.25 * (corrected_corners[0, 1]
+                         + corrected_corners[1, 1]
+                         + corrected_corners[2, 1]
+                         + corrected_corners[3, 1]))
 
         # define the target position of the 4 corner points relative to the mean
         W = (nx - 1) * square_size
@@ -505,14 +491,34 @@ class AppContext(ApplicationContext):
         p3 = [xm - AR * W / 2, ym - AR * H / 2]
         dst = np.asarray([p0, p1, p2, p3])
 
-        tform_proj = tf.estimate_transform('projective', Corrected4Corners, dst)
+        tform_proj = tf.estimate_transform('projective', dst, corrected_corners)
 
         # correct the calibration image
-        img_warped_proj = warp(img, tform_proj.inverse)
+        img_warped_proj = warp(img, tform_proj)
         img_warped_proj = img_as_uint(img_warped_proj)
-        io.imsave(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_PROJ_1.tif'), img_warped_proj)
 
+        #  create new RECT directory in CALIB
+        calib_rect_folder = os.path.join(project_root_path, project_name, 'CALIB', 'RECT')
+        if os.path.isdir(calib_rect_folder):
+            message = '> Populating existing directory ' + calib_rect_folder
+            self.d_print(message)
+        else:
+            os.makedirs(calib_rect_folder)
+            message = '> Creating and populating directory ' + calib_rect_folder
+            self.d_print(message)
 
+        # create new PROJ directory in RECT
+        calib_rect_proj_folder = os.path.join(project_root_path, project_name, 'CALIB', 'RECT', 'PROJ')
+        if os.path.isdir(calib_rect_proj_folder):
+            message = '> Populating existing directory ' + calib_rect_proj_folder
+            self.d_print(message)
+        else:
+            os.makedirs(calib_rect_proj_folder)
+            message = '> Creating and populating directory ' + calib_rect_proj_folder
+            self.d_print(message)
+
+        # save rectified image
+        io.imsave(os.path.join(calib_rect_proj_folder, 'IMG_0001.tif'), img_warped_proj)
 
     def rectification_poly2(self):
         """
@@ -621,7 +627,7 @@ class AppContext(ApplicationContext):
         with open('current_project_metadata.json', 'w') as outfile:
             json.dump(project_metadata, outfile)
 
-        message = '> New project created: '+this_project_path
+        message = '> New project created: ' + this_project_path
         self.d_print(message)
 
         # make a copy of the current metadata file in the project directory
@@ -677,15 +683,15 @@ class AppContext(ApplicationContext):
             self.d_print(message)
 
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
-        num_img = len(list_img)   # get number of images in directory
+        num_img = len(list_img)  # get number of images in directory
 
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
-                                             (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
-                                              calibration_folder) for frame_num in tqdm(range(0, num_img)))
+                                   (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
+                                    calibration_folder) for frame_num in tqdm(range(0, num_img)))
 
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
@@ -725,7 +731,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
 
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
     def import_exp_img_dng(self):
         """
@@ -775,20 +781,20 @@ class AppContext(ApplicationContext):
             self.d_print(message)
 
         list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
-        num_img = len(list_img)   # get number of images in directory
+        num_img = len(list_img)  # get number of images in directory
 
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
-                                             (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
-                                              exp_folder) for frame_num in tqdm(range(0, num_img)))
+                                   (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
+                                    exp_folder) for frame_num in tqdm(range(0, num_img)))
 
         message = '> ' + str(num_img) + ' dng experimental images imported'
         self.d_print(message)
 
-        img_width, img_height = imagesize.get(os.path.join(exp_folder,'IMG_0001.tif'))
+        img_width, img_height = imagesize.get(os.path.join(exp_folder, 'IMG_0001.tif'))
 
         project_metadata['data_sources'].update({'source_exp': source_exp_path,
                                                  'number_exp_images': num_img,
@@ -829,7 +835,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
 
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame']-1) / time_step))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
     def dataset_combobox_fn(self):
         import json
@@ -877,7 +883,7 @@ class AppContext(ApplicationContext):
 
         else:
             this_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
-            #print('displaying the dataset: ' + this_dataset_name)
+            # print('displaying the dataset: ' + this_dataset_name)
 
             with open('current_project_metadata.json') as f:
                 project_metadata = json.load(f)
@@ -896,7 +902,7 @@ class AppContext(ApplicationContext):
             if current_frame_number > end_frame:
                 current_frame_number = end_frame
 
-            #print('displaying frame: ' + str(current_frame_number))
+            # print('displaying frame: ' + str(current_frame_number))
 
             self.rm_mpl()  # clear the plotting area
             display_settings = {'dataset_name': this_dataset_name, 'frame_num': current_frame_number}
@@ -923,7 +929,7 @@ class AppContext(ApplicationContext):
             this_dataset = datasets[this_dataset_name]
 
             start_frame = this_dataset['starting_frame']
-            end_frame = int(start_frame + this_dataset['number_frames'] -1)
+            end_frame = int(start_frame + this_dataset['number_frames'] - 1)
 
             current_frame_number = int(self.ui_main_window.frame_text.text())
             new_frame_number = int(current_frame_number + 1)
@@ -936,7 +942,7 @@ class AppContext(ApplicationContext):
 
             if new_frame_number != current_frame_number:
                 self.ui_main_window.frame_text.setText(str(new_frame_number))
-                self.ui_main_window.time_text.setText(str((new_frame_number-1) * time_step))
+                self.ui_main_window.time_text.setText(str((new_frame_number - 1) * time_step))
                 self.rm_mpl()  # clear the plotting area
                 display_settings = {'dataset_name': this_dataset_name, 'frame_num': new_frame_number}
                 fig1 = plt.figure()
@@ -962,7 +968,7 @@ class AppContext(ApplicationContext):
             this_dataset = datasets[this_dataset_name]
 
             start_frame = this_dataset['starting_frame']
-            end_frame = int(start_frame + this_dataset['number_frames'] -1)
+            end_frame = int(start_frame + this_dataset['number_frames'] - 1)
 
             current_frame_number = int(self.ui_main_window.frame_text.text())
             new_frame_number = int(current_frame_number - 1)

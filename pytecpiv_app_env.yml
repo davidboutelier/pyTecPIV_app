@@ -82,4 +82,4 @@ dependencies:
     - scikit-image==0.17.2
     - scipy==1.4.1
     - tifffile==2020.6.3
-prefix: /home/dpb509/anaconda3/envs/pytecpiv_app
+prefix: C:\ProgramData\Anaconda3\envs\pytecpiv_app
