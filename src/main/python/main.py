@@ -452,7 +452,8 @@ class AppContext(ApplicationContext):
         + (0.5 * ((points[0, 1] - points[3, 1]) + (points[1, 1] - points[2, 1]))) / ny
         AR = AR / square_size
 
-        print(LX, LY, AR)
+        message = '> image resolution after projective transformation will be: ' + format(AR, '03.3d') + ' pixels/' + phys_unit
+        self.d_print(message)
 
         # load image
         project = project_data['project']
@@ -492,6 +493,13 @@ class AppContext(ApplicationContext):
         dst = np.asarray([p0, p1, p2, p3])
 
         tform_proj = tf.estimate_transform('projective', dst, corrected_corners)
+
+        f = open(os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl'), 'wb')
+        pickle.dump(tform_proj, f)
+        f.close()
+
+        message = '> projective calibration function saved as: ' + os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl')
+        self.d_print(message)
 
         # correct the calibration image
         img_warped_proj = warp(img, tform_proj)
