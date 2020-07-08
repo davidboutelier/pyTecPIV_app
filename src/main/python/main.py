@@ -560,6 +560,11 @@ class AppContext(ApplicationContext):
         this_dataset = {'calibration corrected': new_dataset}
         project_metadata['datasets'].update(this_dataset)
 
+        calibration['method'] = 'projective'
+        calibration['function'] = os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl')
+        calibration['corners'] = dst.tolist()
+        project_metadata['calibration'] = calibration
+
         with open('current_project_metadata.json', 'w') as outfile:
             json.dump(project_metadata, outfile)
 
@@ -570,7 +575,6 @@ class AppContext(ApplicationContext):
         dataset_index = dataset_index + 1
         self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), new_dataset_name)
         self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
-
 
     def rectification_poly2(self):
         """
