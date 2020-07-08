@@ -426,7 +426,7 @@ class AppContext(ApplicationContext):
         from skimage import transform as tf
         from skimage.transform import warp
         import pickle
-        from pytecpiv_rectif import find_control_point
+        from pytecpiv_rectif import find_control_point, find_error_proj
         import imagesize
 
         global dataset_index
@@ -575,6 +575,8 @@ class AppContext(ApplicationContext):
         dataset_index = dataset_index + 1
         self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), new_dataset_name)
         self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
+        find_error_proj(img_warped_proj, dst, dx, dy, nx, ny)
 
     def rectification_poly2(self):
         """
