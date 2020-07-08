@@ -422,11 +422,14 @@ class AppContext(ApplicationContext):
         import matplotlib.pyplot as plt
         import json
         from skimage import io
-        from skimage import img_as_uint
+        from skimage import img_as_uint, img_as_float
         from skimage import transform as tf
         from skimage.transform import warp
         import pickle
         from pytecpiv_rectif import find_control_point
+        import imagesize
+
+        global dataset_index
 
         self.ui_main_window.Dataset_comboBox.setCurrentText('calibration')
 
@@ -452,15 +455,17 @@ class AppContext(ApplicationContext):
         + (0.5 * ((points[0, 1] - points[3, 1]) + (points[1, 1] - points[2, 1]))) / ny
         AR = AR / square_size
 
-        message = '> image resolution after projective transformation will be: ' + format(AR, '03.3d') + ' pixels/' + phys_unit
+        message = '> image resolution after projective transformation will be: ' + f"{AR:.2f}" + ' pixels/' + phys_unit
         self.d_print(message)
 
         # load image
         project = project_data['project']
         project_root_path = project['project_root_path']
         project_name = project['project_name']
+        current_frame_number = int(self.ui_main_window.frame_text.text())
 
-        img = io.imread(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_0001.tif'))
+        img = io.imread(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_' +
+                                     str(current_frame_number).zfill(4)+ '.tif'))
 
         corrected_corners = np.zeros(points.shape)
 
@@ -483,6 +488,9 @@ class AppContext(ApplicationContext):
                          + corrected_corners[2, 1]
                          + corrected_corners[3, 1]))
 
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
         # define the target position of the 4 corner points relative to the mean
         W = (nx - 1) * square_size
         H = (ny - 1) * square_size
@@ -498,7 +506,10 @@ class AppContext(ApplicationContext):
         pickle.dump(tform_proj, f)
         f.close()
 
-        message = '> projective calibration function saved as: ' + os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl')
+        message = '> projective calibration function saved as: ' + os.path.join(project_root_path,
+                                                                                project_name,
+                                                                                'CALIB',
+                                                                                'calibration_proj.pckl')
         self.d_print(message)
 
         # correct the calibration image
@@ -526,7 +537,40 @@ class AppContext(ApplicationContext):
             self.d_print(message)
 
         # save rectified image
-        io.imsave(os.path.join(calib_rect_proj_folder, 'IMG_0001.tif'), img_warped_proj)
+        io.imsave(os.path.join(calib_rect_proj_folder, 'IMG_'+str(current_frame_number).zfill(4)+'.tif'),
+                  img_warped_proj)
+
+        # create dataset
+        img_width, img_height = imagesize.get(os.path.join(calib_rect_proj_folder, 'IMG_' +
+                                                           str(current_frame_number).zfill(4)+'.tif'))
+        new_dataset = {'starting_frame': current_frame_number,
+                       'number_frames': 1,
+                       'image': True,
+                       'vector': False,
+                       'scalar': False,
+                       'path_img': calib_rect_proj_folder,
+                       'min_value_image': 0,
+                       'max_value_image': 1,
+                       'name_colormap': 'gray',
+                       'pixel_width': img_width,
+                       'pixel_height': img_height,
+                       'bit_depth': 16,
+                       'image_format': 'tif'}
+
+        this_dataset = {'calibration corrected': new_dataset}
+        project_metadata['datasets'].update(this_dataset)
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        # update and change combobox
+        self.rm_mpl()
+
+        new_dataset_name = 'calibration corrected'
+        dataset_index = dataset_index + 1
+        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), new_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
 
     def rectification_poly2(self):
         """
