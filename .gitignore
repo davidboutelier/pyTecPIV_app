@@ -5,3 +5,7 @@ src/main/python/__pycache__/pytecpiv_conf.cpython-38.pyc
 *.pyc
 .idea/misc.xml
 *.pyc
+.idea/pyTecPIV_app.iml
+.idea/misc.xml
+src/main/python/__pycache__/pytecpiv_conf.cpython-38.pyc
+*.pyc

@@ -1,2 +1,9 @@
-> 2020-06-26 13:57:50.555734
+> 2020-08-14 10:21:16.646755
 > Starting new instance of pytecpiv_app_0.0.1alpha
+> New project created: C:\Users\david\Documents\PIV\PROJECTS\test9
+> Importing dng calibration images from C:\Users\david\Documents\PIV\SOURCES\MINI\CALIB
+> Creating and populating directory C:\Users\david\Documents\PIV\PROJECTS\test9\CALIB
+> 1 dng calibration images imported
+> Importing dng calibration images from C:\Users\david\Documents\PIV\SOURCES\MINI\EXP
+> Creating and populating directory C:\Users\david\Documents\PIV\PROJECTS\test9\EXP
+> 4 dng experimental images imported
