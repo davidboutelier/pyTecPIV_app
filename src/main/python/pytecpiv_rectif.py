@@ -96,5 +96,27 @@ def find_error_proj(img, dst, dx, dy, nx, ny):
 
     print(mean_ex, mean_ey, s_x, s_y)
 
+def correct_images(img_path, start_frame, number_frames, calibration_method, calibration_function_proj, calibration_function_poly):
+    import os
+    import pickle
+    from skimage import io, img_as_uint
+    from skimage.transform import warp
+    import warnings
+
+    corrected_directory = os.path.join(img_path, 'Corrected')
+    if not os.path.exists(corrected_directory):
+        os.makedirs(corrected_directory)
+
+    if calibration_method == 'projective':
+        f = open(calibration_function_proj, 'rb')
+        tform_proj = pickle.load(f)
+        f.close()
+
+        for i in range(start_frame, start_frame+number_frames):
+            img = io.imread(os.path.join(img_path,'IMG_' + str(i).zfill(4) + '.tif'))
+            img_warped_proj = warp(img, tform_proj)
+            warnings.filterwarnings("ignore", category=UserWarning)
+            img_warped_proj = img_as_uint(img_warped_proj)
+            io.imsave(os.path.join(corrected_directory, 'IMG_' + str(i).zfill(4) + '.tif'), img_warped_proj)
 
 

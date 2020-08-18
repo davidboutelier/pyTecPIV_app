@@ -412,6 +412,8 @@ class AppContext(ApplicationContext):
         self.ui_main_window.action_proj_poly3.triggered.connect(self.rectification_proj_poly3)
         self.ui_main_window.action_proj_poly2.triggered.connect(self.rectification_proj_poly2)
 
+        self.ui_main_window.actionRectify.triggered.connect(self.apply_rectification)
+
         # dialog image intensity
         self.ui_main_window.actionImageIntensity.triggered.connect(self.show_preprocessing)
         self.dialog_image_intensity = DialogPreprocessing()
@@ -463,6 +465,69 @@ class AppContext(ApplicationContext):
         self.ui_main_window.showMaximized()
         self.ui_main_window.show()
         return self.app.exec_()
+
+    def apply_rectification(self):
+        global current_dataset_name, dataset_index, time_step, display_settings
+
+        current_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
+        current_frame_num = int(self.ui_main_window.frame_text.text())
+        import os
+        import json
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+        datasets = project_metadata['datasets']
+        this_dataset = datasets[current_dataset_name]
+        img_path = this_dataset['path_img']
+        starting_frame = this_dataset['starting_frame']
+        number_frames = this_dataset['number_frames']
+
+        calibration = project_metadata['calibration']
+        calibration_method = calibration['method']
+        calibration_function_proj = calibration['function_proj']
+        calibration_function_poly = calibration['function_poly']
+
+        self.ui_main_window.statusbar.showMessage('Correcting images. Please wait this may take a while.')
+
+        from pytecpiv_rectif import correct_images
+        correct_images(img_path, starting_frame, number_frames, calibration_method, calibration_function_proj,
+                       calibration_function_poly)
+
+        self.ui_main_window.statusbar.clearMessage()
+
+        # create new dataset
+        import imagesize
+        img_width, img_height = imagesize.get(os.path.join(img_path, 'Corrected', 'IMG_0001.tif'))
+        current_dataset = {'starting_frame': starting_frame,
+                           'number_frames': number_frames,
+                           'image': True,
+                           'vector': False,
+                           'scalar': False,
+                           'path_img': os.path.join(img_path, 'Corrected'),
+                           'min_value_image': 0,
+                           'max_value_image': 1,
+                           'name_colormap': 'gray',
+                           'pixel_width': img_width,
+                           'pixel_height': img_height,
+                           'bit_depth': 16,
+                           'image_format': 'tif'}
+        this_dataset = {'experiment corrected': current_dataset}
+        project_metadata['datasets'].update(this_dataset)
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        new_dataset_name = 'experiment corrected'
+
+        # populate the display_settings dictionary
+        display_settings.update({'dataset_name': new_dataset_name})
+
+        # update and change combobox
+        self.ui_main_window.Dataset_comboBox.addItem(new_dataset_name)
+        new_index = self.ui_main_window.Dataset_comboBox.findText(new_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(new_index)
+
+        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
     def rectification_proj(self):
         """
@@ -615,7 +680,8 @@ class AppContext(ApplicationContext):
         project_metadata['datasets'].update(this_dataset)
 
         calibration['method'] = 'projective'
-        calibration['function'] = os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl')
+        calibration['function_proj'] = os.path.join(project_root_path, project_name, 'CALIB', 'calibration_proj.pckl')
+        calibration['function_poly'] = ''
         calibration['corners'] = dst.tolist()
         project_metadata['calibration'] = calibration
 

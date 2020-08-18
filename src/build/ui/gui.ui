@@ -431,8 +431,8 @@
     <property name="title">
      <string>Preprocessing</string>
     </property>
-    <addaction name="actionImageIntensity"/>
     <addaction name="actionRectify"/>
+    <addaction name="actionImageIntensity"/>
    </widget>
    <widget class="QMenu" name="menuCalibration">
     <property name="title">
