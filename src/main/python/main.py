@@ -743,6 +743,9 @@ class AppContext(ApplicationContext):
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
+
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
@@ -750,6 +753,8 @@ class AppContext(ApplicationContext):
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
                                     calibration_folder) for frame_num in tqdm(range(0, num_img)))
+
+        self.ui_main_window.statusbar.clearMessage()
 
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
@@ -841,6 +846,9 @@ class AppContext(ApplicationContext):
         list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
+
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
@@ -848,6 +856,8 @@ class AppContext(ApplicationContext):
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
                                     exp_folder) for frame_num in tqdm(range(0, num_img)))
+
+        self.ui_main_window.statusbar.clearMessage()
 
         message = '> ' + str(num_img) + ' dng experimental images imported'
         self.d_print(message)
