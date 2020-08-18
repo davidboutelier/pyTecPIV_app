@@ -316,6 +316,53 @@ class DialogCalibrationBoards:
             json.dump(project_metadata, outfile)
 
 
+class DialogPreprocessing:
+    def __init__(self):
+        super().__init__()
+        self.Ui_DialogPreprocessing = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_preprocessing.ui'))
+        self.Ui_DialogPreprocessing.setWindowTitle('preprocessing')
+
+        # call back here
+        self.Ui_DialogPreprocessing.ButtonTest.clicked.connect(self.test_preprocessing)
+
+    def test_preprocessing(self):
+        bool_inverse_img = self.Ui_DialogPreprocessing.checkBox_inverse.checkState()  # 0 = unchecked, 2 = checked
+        bool_gaussian_blur = self.Ui_DialogPreprocessing.checkBox_gaussian.checkState()
+
+        print(bool_inverse_img)
+        print(bool_gaussian_blur)
+
+        if bool_inverse_img == 2:
+            if bool_gaussian_blur == 2:
+                print('not implemented yet')
+            else:
+                current_dataset_name = app_context.ui_main_window.Dataset_comboBox.currentText()
+                current_frame_number = int(app_context.ui_main_window.frame_text.text())
+
+                import json
+                with open('current_project_metadata.json') as f:
+                    project_metadata = json.load(f)
+                    datasets = project_metadata['datasets']
+                    this_dataset = datasets[current_dataset_name]
+                    img_path = this_dataset['path_img']
+
+                from skimage import util
+                from skimage import img_as_float
+                from skimage import io
+                img = img_as_float(io.imread(os.path.join(img_path, 'IMG_' + str(current_frame_number).zfill(4) + '.tif')))
+                inverted_img = util.invert(img)
+
+
+
+
+
+        else:
+            print('not implemented yet')
+
+
+
+
+
 class AppContext(ApplicationContext):
     """
 
@@ -364,6 +411,10 @@ class AppContext(ApplicationContext):
         self.ui_main_window.action_poly3.triggered.connect(self.rectification_poly3)
         self.ui_main_window.action_proj_poly3.triggered.connect(self.rectification_proj_poly3)
         self.ui_main_window.action_proj_poly2.triggered.connect(self.rectification_proj_poly2)
+
+        # dialog image intensity
+        self.ui_main_window.actionImageIntensity.triggered.connect(self.show_preprocessing)
+        self.dialog_image_intensity = DialogPreprocessing()
 
         #  delete log file if it exists
         t = os.path.isfile('log.txt')
@@ -432,6 +483,9 @@ class AppContext(ApplicationContext):
         global dataset_index
 
         self.ui_main_window.Dataset_comboBox.setCurrentText('calibration')
+
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Click the four corners of the calibration board.")
 
         # get the calibration board
         with open('current_project_metadata.json') as f:
@@ -626,6 +680,9 @@ class AppContext(ApplicationContext):
         self.ui_main_window.mplvl.removeWidget(self.figure_toolbar)
         self.figure_toolbar.close()
 
+    def show_preprocessing(self):
+        self.dialog_image_intensity.Ui_DialogPreprocessing.show()
+
     def show_calibration_boards(self):
         self.dialog_calibration_boards.UI_dialog_calibration_boards.show()
 
@@ -718,6 +775,9 @@ class AppContext(ApplicationContext):
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_calib_path = os.path.normpath(source_calib_path)
 
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
+
         parallel_conf = pytecpiv_settings['parallel']
         fraction_core = parallel_conf['core-fraction']
 
@@ -743,9 +803,6 @@ class AppContext(ApplicationContext):
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
-        # create wait message
-        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
-
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
@@ -754,7 +811,7 @@ class AppContext(ApplicationContext):
                                    (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
                                     calibration_folder) for frame_num in tqdm(range(0, num_img)))
 
-        self.ui_main_window.statusbar.clearMessage()
+
 
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
@@ -796,6 +853,8 @@ class AppContext(ApplicationContext):
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
+        self.ui_main_window.statusbar.clearMessage()
+
     def import_exp_img_dng(self):
         """
         import dng images of calibration board
@@ -810,6 +869,9 @@ class AppContext(ApplicationContext):
         from tqdm import tqdm
 
         global current_dataset_name, dataset_index, time_step, display_settings
+
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
 
         # load the json file
         with open('pytecpiv_settings.json') as f:
@@ -846,9 +908,6 @@ class AppContext(ApplicationContext):
         list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
-        # create wait message
-        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
-
         # get number of available core
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
@@ -857,7 +916,7 @@ class AppContext(ApplicationContext):
                                    (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
                                     exp_folder) for frame_num in tqdm(range(0, num_img)))
 
-        self.ui_main_window.statusbar.clearMessage()
+
 
         message = '> ' + str(num_img) + ' dng experimental images imported'
         self.d_print(message)
@@ -904,6 +963,8 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
+
+        self.ui_main_window.statusbar.clearMessage()
 
     def dataset_combobox_fn(self):
         import json

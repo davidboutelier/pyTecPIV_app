@@ -18,7 +18,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <property name="spacing">
-       <number>-1</number>
+       <number>6</number>
       </property>
       <item>
        <widget class="QLabel" name="label">
@@ -54,7 +54,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <property name="spacing">
-         <number>-1</number>
+         <number>6</number>
         </property>
         <item>
          <widget class="QLabel" name="time_label">
@@ -215,7 +215,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <property name="spacing">
-         <number>-1</number>
+         <number>6</number>
         </property>
         <item>
          <widget class="QLabel" name="label_2">
@@ -254,7 +254,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_5">
         <property name="spacing">
-         <number>-1</number>
+         <number>6</number>
         </property>
         <item>
          <widget class="QLabel" name="label_3">
@@ -393,7 +393,7 @@
      <x>0</x>
      <y>0</y>
      <width>1323</width>
-     <height>22</height>
+     <height>20</height>
     </rect>
    </property>
    <widget class="QMenu" name="menu_project">
@@ -431,7 +431,7 @@
     <property name="title">
      <string>Preprocessing</string>
     </property>
-    <addaction name="actionSubtract_Gaussian"/>
+    <addaction name="actionImageIntensity"/>
     <addaction name="actionRectify"/>
    </widget>
    <widget class="QMenu" name="menuCalibration">
@@ -475,7 +475,13 @@
    <addaction name="menuCalibration"/>
    <addaction name="menuPreprocessing"/>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="font">
+    <font>
+     <pointsize>10</pointsize>
+    </font>
+   </property>
+  </widget>
   <action name="new_project_menu">
    <property name="text">
     <string>New</string>
@@ -496,7 +502,7 @@
     <string>Close</string>
    </property>
   </action>
-  <action name="actionSubtract_Gaussian">
+  <action name="actionImageIntensity">
    <property name="text">
     <string>Image intensity</string>
    </property>

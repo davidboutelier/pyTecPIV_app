@@ -6,34 +6,34 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>178</width>
-    <height>271</height>
+    <width>191</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QWidget" name="">
+  <widget class="QWidget" name="layoutWidget">
    <property name="geometry">
     <rect>
      <x>10</x>
      <y>20</y>
-     <width>158</width>
-     <height>244</height>
+     <width>168</width>
+     <height>268</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_2">
       <item>
-       <widget class="QCheckBox" name="checkBox">
+       <widget class="QCheckBox" name="checkBox_inverse">
         <property name="text">
          <string>invert image</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="checkBox_2">
+       <widget class="QCheckBox" name="checkBox_gaussian">
         <property name="text">
          <string>gaussian blur</string>
         </property>
@@ -51,7 +51,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox">
+           <widget class="QComboBox" name="comboBox_gaussian_sigma">
             <item>
              <property name="text">
               <string>1.0</string>
@@ -116,7 +116,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox_2">
+           <widget class="QComboBox" name="comboBox_mode_gaussian">
             <item>
              <property name="text">
               <string>reflect</string>
@@ -156,7 +156,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox_3">
+           <widget class="QComboBox" name="comboBox_scalar_gaussian">
             <item>
              <property name="text">
               <string>0.0</string>
@@ -186,7 +186,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox_4">
+           <widget class="QComboBox" name="comboBox_Bool_gaussian_range">
             <item>
              <property name="text">
               <string>True</string>
@@ -211,7 +211,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QComboBox" name="comboBox_5">
+           <widget class="QComboBox" name="gaussian_truncate">
             <item>
              <property name="text">
               <string>4</string>
@@ -241,7 +241,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QPushButton" name="pushButton">
+     <widget class="QPushButton" name="ButtonTest">
       <property name="text">
        <string>Test</string>
       </property>
