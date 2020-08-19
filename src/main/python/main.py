@@ -8,6 +8,13 @@ import os
 from datetime import datetime
 import matplotlib.pyplot as plt
 
+import time
+import traceback, sys
+
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
+from PyQt5.QtCore import *
+
 # initialise global variables
 current_dataset_name = 'credits'
 dataset_index = 0
@@ -24,23 +31,76 @@ display_settings = {}
 fig1 = plt.figure()
 version = ''
 app_name = ''
+thread_is_complete = True
 
 
-class dialog_image():
+class WorkerSignals(QObject):
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
+    progress = pyqtSignal(int)
+
+
+class Worker(QRunnable):
+    """
+    Worker thread
+
+    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
+
+    :param callback: The function callback to run on this worker thread. Supplied args and
+                     kwargs will be passed through to the runner.
+    :type callback: function
+    :param args: Arguments to pass to the callback function
+    :param kwargs: Keywords to pass to the callback function
+
+    """
+
+    def __init__(self, fn, *args, **kwargs):
+        super(Worker, self).__init__()
+        # Store constructor arguments (re-used for processing)
+        self.fn = fn
+        self.args = args
+        self.kwargs = kwargs
+        self.signals = WorkerSignals()
+
+
+
+    @pyqtSlot()
+    def run(self):
+        """
+        Initialise the runner function with passed args, kwargs.
+        """
+        #self.fn(*self.args, **self.kwargs)
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(*self.args, **self.kwargs)
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
+
+
+class DialogImage:
     def __init__(self):
         super().__init__()
-        self.Ui_DialogImage = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_image.ui'))
-        self.Ui_DialogImage.setWindowTitle('image properties')
+        self.ui_dialog_image = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_image.ui'))
+        self.ui_dialog_image.setWindowTitle('image properties')
 
         # call back here
-        self.Ui_DialogImage.disp_img_checkBox.stateChanged.connect(self.change_image_prop)
-        self.Ui_DialogImage.img_cmap_comboBox.currentIndexChanged.connect(self.change_image_prop)
-        self.Ui_DialogImage.img_max_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
-        self.Ui_DialogImage.img_min_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
+        self.ui_dialog_image.disp_img_checkBox.stateChanged.connect(self.change_image_prop)
+        self.ui_dialog_image.img_cmap_comboBox.currentIndexChanged.connect(self.change_image_prop)
+        self.ui_dialog_image.img_max_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
+        self.ui_dialog_image.img_min_val_comboBox.currentIndexChanged.connect(self.change_image_prop)
 
     def change_image_prop(self):
         import json
         from pytecpiv_display import create_fig
+        global dataset_index
+
         current_frame_number = int(app_context.ui_main_window.frame_text.text())
         dataset_index = int(app_context.ui_main_window.Dataset_comboBox.currentIndex())
         print(dataset_index)
@@ -57,26 +117,26 @@ class dialog_image():
             min_image_value = this_dataset['min_value_image']
             max_image_value = this_dataset['max_value_image']
 
-            new_display_image = self.Ui_DialogImage.disp_img_checkBox.isChecked()
-            new_image_colormap = self.Ui_DialogImage.img_cmap_comboBox.currentText()
-            new_image_min_value = float(self.Ui_DialogImage.img_min_val_comboBox.currentText())
-            new_image_max_value = float(self.Ui_DialogImage.img_max_val_comboBox.currentText())
+            new_display_image = self.ui_dialog_image.disp_img_checkBox.isChecked()
+            new_image_colormap = self.ui_dialog_image.img_cmap_comboBox.currentText()
+            new_image_min_value = float(self.ui_dialog_image.img_min_val_comboBox.currentText())
+            new_image_max_value = float(self.ui_dialog_image.img_max_val_comboBox.currentText())
 
             if new_image_max_value <= new_image_min_value:
                 if new_image_max_value == 1:
                     new_image_min_value = 0.9
-                    self.Ui_DialogImage.img_min_val_comboBox.setCurrentText(str(new_image_min_value))
+                    self.ui_dialog_image.img_min_val_comboBox.setCurrentText(str(new_image_min_value))
                 else:
                     if new_image_min_value == 0:
                         new_image_max_value = 0.1
-                        self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
+                        self.ui_dialog_image.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
                     else:
                         new_image_max_value = new_image_min_value + 0.1
-                        self.Ui_DialogImage.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
+                        self.ui_dialog_image.img_max_val_comboBox.setCurrentText(str(new_image_max_value))
 
             if this_dataset_name in ['calibration', 'experiment']:
                 if not new_display_image:
-                    self.Ui_DialogImage.disp_img_checkBox.setChecked(True)
+                    self.ui_dialog_image.disp_img_checkBox.setChecked(True)
                 new_display_image = 'yes'
             else:
                 if not new_display_image:
@@ -103,23 +163,23 @@ class dialog_image():
             app_context.add_mpl(fig1)
 
 
-class dialog_time():
+class DialogTime:
     def __init__(self):
         super().__init__()
-        self.Ui_DialogTime = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_time.ui'))
-        self.Ui_DialogTime.setWindowTitle('time')
+        self.ui_dialog_time = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_time.ui'))
+        self.ui_dialog_time.setWindowTitle('time')
 
         # callback here
-        self.Ui_DialogTime.time_unit_comboBox.currentIndexChanged.connect(self.time_changed)
-        self.Ui_DialogTime.time_value_comboBox.currentIndexChanged.connect(self.time_changed)
+        self.ui_dialog_time.time_unit_comboBox.currentIndexChanged.connect(self.time_changed)
+        self.ui_dialog_time.time_value_comboBox.currentIndexChanged.connect(self.time_changed)
 
     def time_changed(self):
         import json
         global time_unit, time_step, time_is_defined
 
         # read the values
-        time_step = float(self.Ui_DialogTime.time_value_comboBox.currentText())
-        time_unit = self.Ui_DialogTime.time_unit_comboBox.currentText()
+        time_step = float(self.ui_dialog_time.time_value_comboBox.currentText())
+        time_unit = self.ui_dialog_time.time_unit_comboBox.currentText()
         time_is_defined = True
 
         with open('current_project_metadata.json') as f:
@@ -136,7 +196,7 @@ class dialog_time():
             json.dump(project_metadata, outfile)
 
 
-class dialog_conf:
+class DialogConf:
     """
     Class for the objects in the dialog window for configuration of pyTecPIV
     """
@@ -144,12 +204,12 @@ class dialog_conf:
     def __init__(self):
         super().__init__()
 
-        self.Ui_DialogConf = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_conf.ui'))
-        self.Ui_DialogConf.setWindowTitle('configuration')
+        self.ui_dialog_conf = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_conf.ui'))
+        self.ui_dialog_conf.setWindowTitle('configuration')
 
         # call backs for dialog here
-        self.Ui_DialogConf.set_projects_button.clicked.connect(self.set_projects_path)
-        self.Ui_DialogConf.set_sources_button.clicked.connect(self.set_sources_path)
+        self.ui_dialog_conf.set_projects_button.clicked.connect(self.set_projects_path)
+        self.ui_dialog_conf.set_sources_button.clicked.connect(self.set_sources_path)
 
     def set_projects_path(self):
         """
@@ -167,11 +227,11 @@ class dialog_conf:
         file_exist, sources_path, projects_path = pytecpiv_get_pref()
 
         current_directory = os.getcwd()
-        new_projects_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
+        new_projects_path = QFileDialog.getExistingDirectory(self.ui_dialog_conf, 'Open directory', current_directory)
         new_projects_path = os.path.normpath(new_projects_path)
 
         # get value cores
-        core_fraction = self.Ui_DialogConf.SliderCores.value() / 100
+        core_fraction = self.ui_dialog_conf.SliderCores.value() / 100
 
         if file_exist == 'yes':
             #  write in the file
@@ -195,8 +255,8 @@ class dialog_conf:
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
-        self.Ui_DialogConf.sources_label.setText(sources_path)
-        self.Ui_DialogConf.projects_label.setText(new_projects_path)
+        self.ui_dialog_conf.sources_label.setText(sources_path)
+        self.ui_dialog_conf.projects_label.setText(new_projects_path)
 
         message = '> New projects path written in file pytecpiv_settings.json'
         app_context.d_print(message)
@@ -220,11 +280,11 @@ class dialog_conf:
         file_exist, sources_path, projects_path = pytecpiv_get_pref()
 
         current_directory = os.getcwd()
-        new_sources_path = QFileDialog.getExistingDirectory(self.Ui_DialogConf, 'Open directory', current_directory)
+        new_sources_path = QFileDialog.getExistingDirectory(self.ui_dialog_conf, 'Open directory', current_directory)
         new_sources_path = os.path.normpath(new_sources_path)
 
         # get value cores
-        core_fraction = self.Ui_DialogConf.SliderCores.value() / 100
+        core_fraction = self.ui_dialog_conf.SliderCores.value() / 100
 
         if file_exist == 'yes':
             #  write in the file
@@ -251,8 +311,8 @@ class dialog_conf:
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
 
-        self.Ui_DialogConf.sources_label.setText(new_sources_path)
-        self.Ui_DialogConf.projects_label.setText(projects_path)
+        self.ui_dialog_conf.sources_label.setText(new_sources_path)
+        self.ui_dialog_conf.projects_label.setText(projects_path)
 
         message = '> New sources path written in file pytecpiv_settings.json'
         app_context.d_print(message)
@@ -269,19 +329,19 @@ class DialogCalibrationBoards:
     def __init__(self):
         super().__init__()
 
-        self.UI_dialog_calibration_boards = uic.loadUi(os.path.join('src', 'build', 'ui',
+        self.ui_dialog_calibration_boards = uic.loadUi(os.path.join('src', 'build', 'ui',
                                                                     'dialog_calibration_boards.ui'))
-        self.UI_dialog_calibration_boards.setWindowTitle('calibration boards')
+        self.ui_dialog_calibration_boards.setWindowTitle('calibration boards')
 
         import json
         with open('calibration_boards.json') as f:
             calibration_boards = json.load(f)
 
         list_items = calibration_boards.keys()
-        self.UI_dialog_calibration_boards.calibration_borads_comboBox.addItems(list_items)
+        self.ui_dialog_calibration_boards.calibration_borads_comboBox.addItems(list_items)
 
         # call backs for dialog here
-        self.UI_dialog_calibration_boards.buttonBox.accepted.connect(
+        self.ui_dialog_calibration_boards.buttonBox.accepted.connect(
             self.calibration_boards_accepted)
 
     def calibration_boards_accepted(self):
@@ -290,7 +350,7 @@ class DialogCalibrationBoards:
         :return:
         """
         import json
-        board_name = self.UI_dialog_calibration_boards.calibration_borads_comboBox.currentText()
+        board_name = self.ui_dialog_calibration_boards.calibration_borads_comboBox.currentText()
         print(board_name)
 
         with open('calibration_boards.json') as f:
@@ -319,15 +379,15 @@ class DialogCalibrationBoards:
 class DialogPreprocessing:
     def __init__(self):
         super().__init__()
-        self.Ui_DialogPreprocessing = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_preprocessing.ui'))
-        self.Ui_DialogPreprocessing.setWindowTitle('preprocessing')
+        self.ui_dialog_preprocessing = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_preprocessing.ui'))
+        self.ui_dialog_preprocessing.setWindowTitle('preprocessing')
 
         # call back here
-        self.Ui_DialogPreprocessing.ButtonTest.clicked.connect(self.test_preprocessing)
+        self.ui_dialog_preprocessing.ButtonTest.clicked.connect(self.test_preprocessing)
 
     def test_preprocessing(self):
-        bool_inverse_img = self.Ui_DialogPreprocessing.checkBox_inverse.checkState()  # 0 = unchecked, 2 = checked
-        bool_gaussian_blur = self.Ui_DialogPreprocessing.checkBox_gaussian.checkState()
+        bool_inverse_img = self.ui_dialog_preprocessing.checkBox_inverse.checkState()  # 0 = unchecked, 2 = checked
+        bool_gaussian_blur = self.ui_dialog_preprocessing.checkBox_gaussian.checkState()
 
         print(bool_inverse_img)
         print(bool_gaussian_blur)
@@ -352,15 +412,8 @@ class DialogPreprocessing:
                 img = img_as_float(io.imread(os.path.join(img_path, 'IMG_' + str(current_frame_number).zfill(4) + '.tif')))
                 inverted_img = util.invert(img)
 
-
-
-
-
         else:
             print('not implemented yet')
-
-
-
 
 
 class AppContext(ApplicationContext):
@@ -370,12 +423,14 @@ class AppContext(ApplicationContext):
 
     def __init__(self):
         super().__init__()
+        self.ui_main_window = uic.loadUi(os.path.join('src', 'build', 'ui', 'gui.ui'))
+        self.threadpool = QThreadPool()
+        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
     def run(self):
         global version, app_name
 
         #  import ui from QtDesigner ui file
-        self.ui_main_window = uic.loadUi(os.path.join('src', 'build', 'ui', 'gui.ui'))
         version = self.build_settings['version']
         app_name = self.build_settings['app_name']
         self.ui_main_window.setWindowTitle(app_name + ' v.' + version)
@@ -386,13 +441,13 @@ class AppContext(ApplicationContext):
 
         #  define the callbacks here
         self.ui_main_window.actionConfiguration.triggered.connect(self.show_conf_fn)  # menu settings
-        self.dialog_conf = dialog_conf()
+        self.dialog_conf = DialogConf()
 
         self.ui_main_window.Img_pushButton.clicked.connect(self.show_image_dialog)
-        self.dialog_image = dialog_image()
+        self.dialog_image = DialogImage()
 
         self.ui_main_window.actionDefine_time_interval.triggered.connect(self.show_time)
-        self.dialog_time = dialog_time()
+        self.dialog_time = DialogTime()
 
         self.ui_main_window.Calibration_board_menu.triggered.connect(self.show_calibration_boards)
         self.dialog_calibration_boards = DialogCalibrationBoards()
@@ -747,13 +802,13 @@ class AppContext(ApplicationContext):
         self.figure_toolbar.close()
 
     def show_preprocessing(self):
-        self.dialog_image_intensity.Ui_DialogPreprocessing.show()
+        self.dialog_image_intensity.ui_dialog_preprocessing.show()
 
     def show_calibration_boards(self):
-        self.dialog_calibration_boards.UI_dialog_calibration_boards.show()
+        self.dialog_calibration_boards.ui_dialog_calibration_boards.show()
 
     def show_time(self):
-        self.dialog_time.Ui_DialogTime.show()
+        self.dialog_time.ui_dialog_time.show()
 
     def show_conf_fn(self):
         """This function makes visible the dialogue box for the configuration"""
@@ -762,13 +817,13 @@ class AppContext(ApplicationContext):
 
         current_directory = os.getcwd()
         (file_exist, sources_path, projects_path) = pytecpiv_get_pref()
-        self.dialog_conf.Ui_DialogConf.code_label.setText(current_directory)
-        self.dialog_conf.Ui_DialogConf.sources_label.setText(sources_path)
-        self.dialog_conf.Ui_DialogConf.projects_label.setText(projects_path)
-        self.dialog_conf.Ui_DialogConf.show()
+        self.dialog_conf.ui_dialog_conf.code_label.setText(current_directory)
+        self.dialog_conf.ui_dialog_conf.sources_label.setText(sources_path)
+        self.dialog_conf.ui_dialog_conf.projects_label.setText(projects_path)
+        self.dialog_conf.ui_dialog_conf.show()
 
     def show_image_dialog(self):
-        self.dialog_image.Ui_DialogImage.show()
+        self.dialog_image.ui_dialog_image.show()
 
     def new_project(self):
         """
@@ -816,6 +871,20 @@ class AppContext(ApplicationContext):
         copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
                                                            this_project_metadata_filename))
 
+    def import_img(self, use_cores, source_calib_path, list_img, calibration_folder, num_img):
+        from joblib import Parallel, delayed
+        from pytecpiv_import import convert_dng
+
+        Parallel(n_jobs=use_cores)(delayed(convert_dng)
+                                   (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
+                                    calibration_folder) for frame_num in range(0, num_img))
+
+    def thread_complete(self):
+        global thread_is_complete
+
+        thread_is_complete = True
+        return thread_is_complete
+
     def import_calib_img_dng(self):
         """
         import dng images of calibration board
@@ -824,12 +893,11 @@ class AppContext(ApplicationContext):
         import json
         import os
         from PyQt5.QtWidgets import QFileDialog
-        from joblib import Parallel, delayed
-        from pytecpiv_import import convert_dng
         import imagesize
-        from tqdm import tqdm
 
         global current_dataset_name, dataset_index, time_step, display_settings
+
+
 
         # load the json file
         with open('pytecpiv_settings.json') as f:
@@ -873,11 +941,17 @@ class AppContext(ApplicationContext):
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
-        Parallel(n_jobs=use_cores)(delayed(convert_dng)
-                                   (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
-                                    calibration_folder) for frame_num in tqdm(range(0, num_img)))
+        worker = Worker(self.import_img, use_cores, source_calib_path, list_img, calibration_folder, num_img)
+        worker.signals.finished.connect(self.thread_complete)
+        thread_is_complete = False
 
+        self.threadpool.start(worker)
 
+        while not thread_is_complete:
+            thread_count = self.threadpool.activeThreadCount()
+
+            if thread_count == 0:
+                thread_is_complete = True
 
         message = '> ' + str(num_img) + ' dng calibration images imported'
         self.d_print(message)
@@ -980,9 +1054,7 @@ class AppContext(ApplicationContext):
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
-                                    exp_folder) for frame_num in tqdm(range(0, num_img)))
-
-
+                                    exp_folder) for frame_num in range(0, num_img))
 
         message = '> ' + str(num_img) + ' dng experimental images imported'
         self.d_print(message)
@@ -1108,6 +1180,7 @@ class AppContext(ApplicationContext):
     def plus_frame(self):
         import json
         from pytecpiv_display import create_fig
+        global display_settings
 
         dataset_index = self.ui_main_window.Dataset_comboBox.currentIndex()
 

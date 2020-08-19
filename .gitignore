@@ -5,3 +5,9 @@ src/main/python/__pycache__/pytecpiv_conf.cpython-38.pyc
 *.pyc
 .idea/misc.xml
 *.pyc
+*.pyc
+pytecpiv_settings.json
+log.txt
+log.txt
+..json
+.idea/pyTecPIV_app.iml
