@@ -13,3 +13,9 @@ log.txt
 .idea/pyTecPIV_app.iml
 *.pyc
 *.iml
+.idea/misc.xml
+.idea/pyTecPIV_app.iml
+current_project_metadata.json
+log.txt
+pytecpiv_settings.json
+..json

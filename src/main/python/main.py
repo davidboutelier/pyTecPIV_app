@@ -15,7 +15,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
-# initialise global variables
+# GLOBAL VARIABLES
 current_dataset_name = 'credits'
 dataset_index = 0
 
@@ -25,16 +25,36 @@ time_is_defined = False
 
 scale = 1
 phys_unit = 'mm'
+scale_is_defined = False
 
 display_settings = {}
 
 fig1 = plt.figure()
 version = ''
 app_name = ''
-thread_is_complete = True
+
+import traceback, sys
 
 
+class WorkerSignals(QObject):
+    '''
+    Defines the signals available from a running worker thread.
 
+    Supported signals are:
+
+    finished
+        No data
+
+    error
+        `tuple` (exctype, value, traceback.format_exc() )
+
+    result
+        `object` data returned from processing, anything
+
+    '''
+    finished = pyqtSignal()
+    error = pyqtSignal(tuple)
+    result = pyqtSignal(object)
 
 
 class Worker(QRunnable):
@@ -58,6 +78,7 @@ class Worker(QRunnable):
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
+        self.signals = WorkerSignals()
 
 
     @pyqtSlot()
@@ -66,7 +87,21 @@ class Worker(QRunnable):
         Initialise the runner function with passed args, kwargs.
         """
         # Retrieve args/kwargs here; and fire processing using them
-        self.fn(*self.args, **self.kwargs)
+        #self.fn(*self.args, **self.kwargs)
+
+        # Retrieve args/kwargs here; and fire processing using them
+        try:
+            result = self.fn(
+                *self.args, **self.kwargs
+            )
+        except:
+            traceback.print_exc()
+            exctype, value = sys.exc_info()[:2]
+            self.signals.error.emit((exctype, value, traceback.format_exc()))
+        else:
+            self.signals.result.emit(result)  # Return the result of the processing
+        finally:
+            self.signals.finished.emit()  # Done
 
 
 class DialogImage:
@@ -856,32 +891,43 @@ class AppContext(ApplicationContext):
         copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
                                                            this_project_metadata_filename))
 
-    def import_img(self, source_path, output_folder, new_dataset_name, index):
+    def thread_complete(self):
+        import json
+
+        global current_dataset_name, dataset_index
+
+        self.ui_main_window.statusbar.showMessage('import completed')
+        print('THREAD FINISHED')
+
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+            datasets = project_metadata['datasets']
+            current_dataset = datasets[current_dataset_name]
+            num_img = current_dataset['number_frames']
+
+        message = '> ' + str(num_img) + ' dng images imported'
+        self.d_print(message)
+
+        # update and change combobox
+        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), current_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
+        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
+
+        self.ui_main_window.statusbar.clearMessage()
+
+
+
+    def import_img(self, source_path, output_folder, use_cores, num_img, list_img, new_dataset_name):
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
         import imagesize
         import json
 
-        # load the json file
-        with open('pytecpiv_settings.json') as f:
-            pytecpiv_settings = json.load(f)
-
-        parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
-
-        list_img = sorted(os.listdir(source_path))  # find images in target directory
-        num_img = len(list_img)  # get number of images in directory
-
-        # get number of available core
-        available_cores = os.cpu_count()
-        use_cores = int(fraction_core * available_cores)
-
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_path, list_img[frame_num]),
                                     output_folder) for frame_num in range(0, num_img))
-
-        message = '> ' + str(num_img) + ' dng images imported'
-        self.d_print(message)
 
         with open('current_project_metadata.json') as f:
             project_metadata = json.load(f)
@@ -915,14 +961,7 @@ class AppContext(ApplicationContext):
         with open('current_project_metadata.json', 'w') as outfile:
             json.dump(project_metadata, outfile)
 
-        # update and change combobox
-        self.ui_main_window.Dataset_comboBox.insertItem(int(index), new_dataset_name)
-        #self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(index))
 
-        #self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        #self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
-
-        #self.ui_main_window.statusbar.clearMessage()
 
     def import_calib_img_dng(self):
         """
@@ -967,10 +1006,27 @@ class AppContext(ApplicationContext):
             message = '> Creating and populating directory ' + calibration_folder
             self.d_print(message)
 
-        new_dataset_name = 'calibration'
+        current_dataset_name = 'calibration'
         dataset_index = dataset_index + 1
 
-        worker = Worker(self.import_img, source_calib_path, calibration_folder, new_dataset_name, dataset_index)
+        # load the json file
+        with open('pytecpiv_settings.json') as f:
+            pytecpiv_settings = json.load(f)
+
+        parallel_conf = pytecpiv_settings['parallel']
+        fraction_core = parallel_conf['core-fraction']
+
+        list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
+        num_img = len(list_img)  # get number of images in directory
+
+        # get number of available core
+        available_cores = os.cpu_count()
+        use_cores = int(fraction_core * available_cores)
+
+        worker = Worker(self.import_img, source_calib_path, calibration_folder, use_cores, num_img,
+                        list_img, current_dataset_name)
+        worker.signals.finished.connect(self.thread_complete)
+
         self.threadpool.start(worker)
 
     def import_exp_img_dng(self):
@@ -984,7 +1040,6 @@ class AppContext(ApplicationContext):
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
         import imagesize
-        from tqdm import tqdm
 
         global current_dataset_name, dataset_index, time_step, display_settings
 
