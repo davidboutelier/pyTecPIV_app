@@ -34,11 +34,7 @@ app_name = ''
 thread_is_complete = True
 
 
-class WorkerSignals(QObject):
-    finished = pyqtSignal()
-    error = pyqtSignal(tuple)
-    result = pyqtSignal(object)
-    progress = pyqtSignal(int)
+
 
 
 class Worker(QRunnable):
@@ -57,12 +53,11 @@ class Worker(QRunnable):
 
     def __init__(self, fn, *args, **kwargs):
         super(Worker, self).__init__()
+
         # Store constructor arguments (re-used for processing)
         self.fn = fn
         self.args = args
         self.kwargs = kwargs
-        self.signals = WorkerSignals()
-
 
 
     @pyqtSlot()
@@ -72,16 +67,7 @@ class Worker(QRunnable):
         """
         #self.fn(*self.args, **self.kwargs)
         # Retrieve args/kwargs here; and fire processing using them
-        try:
-            result = self.fn(*self.args, **self.kwargs)
-        except:
-            traceback.print_exc()
-            exctype, value = sys.exc_info()[:2]
-            self.signals.error.emit((exctype, value, traceback.format_exc()))
-        else:
-            self.signals.result.emit(result)  # Return the result of the processing
-        finally:
-            self.signals.finished.emit()  # Done
+        self.fn(*self.args, **self.kwargs)
 
 
 class DialogImage:
@@ -871,19 +857,59 @@ class AppContext(ApplicationContext):
         copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
                                                            this_project_metadata_filename))
 
-    def import_img(self, use_cores, source_calib_path, list_img, calibration_folder, num_img):
+    def import_img(self, use_cores, source_path, list_img, output_folder, num_img, new_dataset_name):
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
+        import imagesize
+        import json
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
-                                   (frame_num, os.path.join(source_calib_path, list_img[frame_num]),
-                                    calibration_folder) for frame_num in range(0, num_img))
+                                   (frame_num, os.path.join(source_path, list_img[frame_num]),
+                                    output_folder) for frame_num in range(0, num_img))
 
-    def thread_complete(self):
-        global thread_is_complete
+        message = '> ' + str(num_img) + ' dng images imported'
+        self.d_print(message)
 
-        thread_is_complete = True
-        return thread_is_complete
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
+        if new_dataset_name == 'calibration':
+            project_metadata['data_sources'].update({'source_calibration': source_path,
+                                                     'number_calibration_images': num_img,
+                                                     'calibration_image_format': 'dng'})
+
+            img_width, img_height = imagesize.get(os.path.join(output_folder, 'IMG_0001.tif'))
+
+            # create dataset
+
+            current_dataset = {'starting_frame': 1,
+                               'number_frames': num_img,
+                               'image': True,
+                               'vector': False,
+                               'scalar': False,
+                               'path_img': output_folder,
+                               'min_value_image': 0,
+                               'max_value_image': 1,
+                               'name_colormap': 'gray',
+                               'pixel_width': img_width,
+                               'pixel_height': img_height,
+                               'bit_depth': 16,
+                               'image_format': 'tif'}
+
+            this_dataset = {new_dataset_name: current_dataset}
+            project_metadata['datasets'].update(this_dataset)
+
+        with open('current_project_metadata.json', 'w') as outfile:
+            json.dump(project_metadata, outfile)
+
+        # update and change combobox
+        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), new_dataset_name)
+        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+
+        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
+
+        self.ui_main_window.statusbar.clearMessage()
 
     def import_calib_img_dng(self):
         """
@@ -896,8 +922,6 @@ class AppContext(ApplicationContext):
         import imagesize
 
         global current_dataset_name, dataset_index, time_step, display_settings
-
-
 
         # load the json file
         with open('pytecpiv_settings.json') as f:
@@ -941,59 +965,12 @@ class AppContext(ApplicationContext):
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
-        worker = Worker(self.import_img, use_cores, source_calib_path, list_img, calibration_folder, num_img)
-        worker.signals.finished.connect(self.thread_complete)
-        thread_is_complete = False
-
-        self.threadpool.start(worker)
-
-        while not thread_is_complete:
-            thread_count = self.threadpool.activeThreadCount()
-
-            if thread_count == 0:
-                thread_is_complete = True
-
-        message = '> ' + str(num_img) + ' dng calibration images imported'
-        self.d_print(message)
-
-        project_metadata['data_sources'].update({'source_calibration': source_calib_path,
-                                                 'number_calibration_images': num_img,
-                                                 'calibration_image_format': 'dng'})
-
-        img_width, img_height = imagesize.get(os.path.join(calibration_folder, 'IMG_0001.tif'))
-
-        # create dataset
-        current_dataset = {'starting_frame': 1,
-                           'number_frames': num_img,
-                           'image': True,
-                           'vector': False,
-                           'scalar': False,
-                           'path_img': calibration_folder,
-                           'min_value_image': 0,
-                           'max_value_image': 1,
-                           'name_colormap': 'gray',
-                           'pixel_width': img_width,
-                           'pixel_height': img_height,
-                           'bit_depth': 16,
-                           'image_format': 'tif'}
-
-        this_dataset = {'calibration': current_dataset}
-        project_metadata['datasets'].update(this_dataset)
-
-        with open('current_project_metadata.json', 'w') as outfile:
-            json.dump(project_metadata, outfile)
-
-        current_dataset_name = 'calibration'
+        new_dataset_name = 'calibration'
         dataset_index = dataset_index + 1
 
-        # update and change combobox
-        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), current_dataset_name)
-        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
-
-        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
-
-        self.ui_main_window.statusbar.clearMessage()
+        worker = Worker(self.import_img, use_cores, source_calib_path, list_img, calibration_folder, num_img,
+                        new_dataset_name)
+        self.threadpool.start(worker)
 
     def import_exp_img_dng(self):
         """

@@ -11,3 +11,5 @@ log.txt
 log.txt
 ..json
 .idea/pyTecPIV_app.iml
+*.pyc
+*.iml
