@@ -65,7 +65,6 @@ class Worker(QRunnable):
         """
         Initialise the runner function with passed args, kwargs.
         """
-        #self.fn(*self.args, **self.kwargs)
         # Retrieve args/kwargs here; and fire processing using them
         self.fn(*self.args, **self.kwargs)
 
@@ -857,11 +856,25 @@ class AppContext(ApplicationContext):
         copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
                                                            this_project_metadata_filename))
 
-    def import_img(self, use_cores, source_path, list_img, output_folder, num_img, new_dataset_name):
+    def import_img(self, source_path, output_folder, new_dataset_name, index):
         from joblib import Parallel, delayed
         from pytecpiv_import import convert_dng
         import imagesize
         import json
+
+        # load the json file
+        with open('pytecpiv_settings.json') as f:
+            pytecpiv_settings = json.load(f)
+
+        parallel_conf = pytecpiv_settings['parallel']
+        fraction_core = parallel_conf['core-fraction']
+
+        list_img = sorted(os.listdir(source_path))  # find images in target directory
+        num_img = len(list_img)  # get number of images in directory
+
+        # get number of available core
+        available_cores = os.cpu_count()
+        use_cores = int(fraction_core * available_cores)
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_path, list_img[frame_num]),
@@ -903,13 +916,13 @@ class AppContext(ApplicationContext):
             json.dump(project_metadata, outfile)
 
         # update and change combobox
-        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), new_dataset_name)
-        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
+        self.ui_main_window.Dataset_comboBox.insertItem(int(index), new_dataset_name)
+        #self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(index))
 
-        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
+        #self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
+        #self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
-        self.ui_main_window.statusbar.clearMessage()
+        #self.ui_main_window.statusbar.clearMessage()
 
     def import_calib_img_dng(self):
         """
@@ -919,7 +932,6 @@ class AppContext(ApplicationContext):
         import json
         import os
         from PyQt5.QtWidgets import QFileDialog
-        import imagesize
 
         global current_dataset_name, dataset_index, time_step, display_settings
 
@@ -935,9 +947,6 @@ class AppContext(ApplicationContext):
 
         # create wait message
         self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
-
-        parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
 
         message = '> Importing dng calibration images from ' + source_calib_path
         self.d_print(message)
@@ -958,18 +967,10 @@ class AppContext(ApplicationContext):
             message = '> Creating and populating directory ' + calibration_folder
             self.d_print(message)
 
-        list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
-        num_img = len(list_img)  # get number of images in directory
-
-        # get number of available core
-        available_cores = os.cpu_count()
-        use_cores = int(fraction_core * available_cores)
-
         new_dataset_name = 'calibration'
         dataset_index = dataset_index + 1
 
-        worker = Worker(self.import_img, use_cores, source_calib_path, list_img, calibration_folder, num_img,
-                        new_dataset_name)
+        worker = Worker(self.import_img, source_calib_path, calibration_folder, new_dataset_name, dataset_index)
         self.threadpool.start(worker)
 
     def import_exp_img_dng(self):
