@@ -1,6 +1,13 @@
-> 2020-08-20 16:03:28.267601
+> 2020-08-23 16:20:29.566306
 > Starting new instance of pytecpiv_app_0.0.1alpha2
-> New project created: /Users/dpb509/Documents/PIV/PROJECTS/test2
+> New project created: /Users/dpb509/Documents/PIV/PROJECTS/test4
 > Importing dng calibration images from /Users/dpb509/Documents/PIV/SOURCES/MINI/CALIB
-> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test2/CALIB
+> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB
 > 1 dng images imported
+> Importing dng calibration images from /Users/dpb509/Documents/PIV/SOURCES/MINI/EXP
+> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/EXP
+> 4 dng images imported
+> image resolution after projective transformation will be: 6.84 pixels/mm
+> projective calibration function saved as: /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/calibration_proj.pckl
+> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/RECT
+> Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/RECT/PROJ

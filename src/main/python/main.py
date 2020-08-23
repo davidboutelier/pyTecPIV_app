@@ -891,13 +891,13 @@ class AppContext(ApplicationContext):
         copy('current_project_metadata.json', os.path.join(this_project_root_path, this_project_name,
                                                            this_project_metadata_filename))
 
-    def thread_complete(self):
+    def import_thread_complete(self):
         import json
 
         global current_dataset_name, dataset_index
 
         self.ui_main_window.statusbar.showMessage('import completed')
-        print('THREAD FINISHED')
+        print('IMPORT THREAD FINISHED')
 
         with open('current_project_metadata.json') as f:
             project_metadata = json.load(f)
@@ -916,8 +916,6 @@ class AppContext(ApplicationContext):
         self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
 
         self.ui_main_window.statusbar.clearMessage()
-
-
 
     def import_img(self, source_path, output_folder, use_cores, num_img, list_img, new_dataset_name):
         from joblib import Parallel, delayed
@@ -957,11 +955,33 @@ class AppContext(ApplicationContext):
 
             this_dataset = {new_dataset_name: current_dataset}
             project_metadata['datasets'].update(this_dataset)
+        elif new_dataset_name == 'experiment':
+            project_metadata['data_sources'].update({'source_experiment': source_path,
+                                                     'number_experiment_images': num_img,
+                                                     'experiment_image_format': 'dng'})
+
+            img_width, img_height = imagesize.get(os.path.join(output_folder, 'IMG_0001.tif'))
+
+            # create dataset
+            current_dataset = {'starting_frame': 1,
+                               'number_frames': num_img,
+                               'image': True,
+                               'vector': False,
+                               'scalar': False,
+                               'path_img': output_folder,
+                               'min_value_image': 0,
+                               'max_value_image': 1,
+                               'name_colormap': 'gray',
+                               'pixel_width': img_width,
+                               'pixel_height': img_height,
+                               'bit_depth': 16,
+                               'image_format': 'tif'}
+
+            this_dataset = {new_dataset_name: current_dataset}
+            project_metadata['datasets'].update(this_dataset)
 
         with open('current_project_metadata.json', 'w') as outfile:
             json.dump(project_metadata, outfile)
-
-
 
     def import_calib_img_dng(self):
         """
@@ -980,6 +1000,8 @@ class AppContext(ApplicationContext):
 
         sources = pytecpiv_settings['sources']
         sources_path = sources['sources_path']
+        parallel_conf = pytecpiv_settings['parallel']
+        fraction_core = parallel_conf['core-fraction']
 
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_calib_path = os.path.normpath(source_calib_path)
@@ -1009,13 +1031,6 @@ class AppContext(ApplicationContext):
         current_dataset_name = 'calibration'
         dataset_index = dataset_index + 1
 
-        # load the json file
-        with open('pytecpiv_settings.json') as f:
-            pytecpiv_settings = json.load(f)
-
-        parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
-
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
@@ -1023,10 +1038,14 @@ class AppContext(ApplicationContext):
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
+        # start the import in a different thread in order to not freeze the GUI
         worker = Worker(self.import_img, source_calib_path, calibration_folder, use_cores, num_img,
                         list_img, current_dataset_name)
-        worker.signals.finished.connect(self.thread_complete)
 
+        # actions to be taken after import thread is finished.
+        worker.signals.finished.connect(self.import_thread_complete)
+
+        # start the thread
         self.threadpool.start(worker)
 
     def import_exp_img_dng(self):
@@ -1037,14 +1056,8 @@ class AppContext(ApplicationContext):
         import json
         import os
         from PyQt5.QtWidgets import QFileDialog
-        from joblib import Parallel, delayed
-        from pytecpiv_import import convert_dng
-        import imagesize
 
         global current_dataset_name, dataset_index, time_step, display_settings
-
-        # create wait message
-        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
 
         # load the json file
         with open('pytecpiv_settings.json') as f:
@@ -1053,11 +1066,14 @@ class AppContext(ApplicationContext):
         sources = pytecpiv_settings['sources']
         sources_path = sources['sources_path']
 
+        parallel_conf = pytecpiv_settings['parallel']
+        fraction_core = parallel_conf['core-fraction']
+
         source_exp_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_exp_path = os.path.normpath(source_exp_path)
 
-        parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
+        # create wait message
+        self.ui_main_window.statusbar.showMessage("Importing images. Please wait, this may take a while.")
 
         message = '> Importing dng calibration images from ' + source_exp_path
         self.d_print(message)
@@ -1078,6 +1094,9 @@ class AppContext(ApplicationContext):
             message = '> Creating and populating directory ' + exp_folder
             self.d_print(message)
 
+        current_dataset_name = 'experiment'
+        dataset_index = dataset_index + 1
+
         list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
 
@@ -1085,57 +1104,15 @@ class AppContext(ApplicationContext):
         available_cores = os.cpu_count()
         use_cores = int(fraction_core * available_cores)
 
-        Parallel(n_jobs=use_cores)(delayed(convert_dng)
-                                   (frame_num, os.path.join(source_exp_path, list_img[frame_num]),
-                                    exp_folder) for frame_num in range(0, num_img))
+        # start the import in a different thread in order to not freeze the GUI
+        worker = Worker(self.import_img, source_exp_path, exp_folder, use_cores, num_img,
+                        list_img, current_dataset_name)
 
-        message = '> ' + str(num_img) + ' dng experimental images imported'
-        self.d_print(message)
+        # actions to be taken after import thread is finished.
+        worker.signals.finished.connect(self.import_thread_complete)
 
-        img_width, img_height = imagesize.get(os.path.join(exp_folder, 'IMG_0001.tif'))
-
-        project_metadata['data_sources'].update({'source_exp': source_exp_path,
-                                                 'number_exp_images': num_img,
-                                                 'exp_image_format': 'dng',
-                                                 'time_interval': time_step,
-                                                 'time_unit': time_unit,
-                                                 'time_interval_is_defined': False,
-                                                 'pixel_width': img_width,
-                                                 'pixel_height': img_height})
-        # create dataset
-        current_dataset = {'starting_frame': 1,
-                           'number_frames': num_img,
-                           'image': True,
-                           'vector': False,
-                           'scalar': False,
-                           'path_img': exp_folder,
-                           'min_value_image': 0,
-                           'max_value_image': 1,
-                           'name_colormap': 'gray',
-                           'pixel_width': img_width,
-                           'pixel_height': img_height,
-                           'bit_depth': 16,
-                           'image_format': 'tif'}
-        this_dataset = {'experiment': current_dataset}
-        project_metadata['datasets'].update(this_dataset)
-
-        with open('current_project_metadata.json', 'w') as outfile:
-            json.dump(project_metadata, outfile)
-
-        current_dataset_name = 'experiment'
-        dataset_index = dataset_index + 1
-
-        # populate the display_settings dictionary
-        display_settings.update({'dataset_name': current_dataset_name})
-
-        # update and change combobox
-        self.ui_main_window.Dataset_comboBox.insertItem(int(dataset_index), current_dataset_name)
-        self.ui_main_window.Dataset_comboBox.setCurrentIndex(int(dataset_index))
-
-        self.ui_main_window.frame_text.setText(str(current_dataset['starting_frame']))
-        self.ui_main_window.time_text.setText(str((current_dataset['starting_frame'] - 1) / time_step))
-
-        self.ui_main_window.statusbar.clearMessage()
+        # start the thread
+        self.threadpool.start(worker)
 
     def dataset_combobox_fn(self):
         import json
