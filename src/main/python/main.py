@@ -16,6 +16,8 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
 # GLOBAL VARIABLES
+debug = True
+
 current_dataset_name = 'credits'
 dataset_index = 0
 
@@ -80,20 +82,17 @@ class Worker(QRunnable):
         self.kwargs = kwargs
         self.signals = WorkerSignals()
 
-
     @pyqtSlot()
     def run(self):
         """
         Initialise the runner function with passed args, kwargs.
         """
         # Retrieve args/kwargs here; and fire processing using them
-        #self.fn(*self.args, **self.kwargs)
+        # self.fn(*self.args, **self.kwargs)
 
         # Retrieve args/kwargs here; and fire processing using them
         try:
-            result = self.fn(
-                *self.args, **self.kwargs
-            )
+            result = self.fn(*self.args, **self.kwargs)
         except:
             traceback.print_exc()
             exctype, value = sys.exc_info()[:2]
@@ -429,7 +428,8 @@ class DialogPreprocessing:
                 from skimage import util
                 from skimage import img_as_float
                 from skimage import io
-                img = img_as_float(io.imread(os.path.join(img_path, 'IMG_' + str(current_frame_number).zfill(4) + '.tif')))
+                img = img_as_float(
+                    io.imread(os.path.join(img_path, 'IMG_' + str(current_frame_number).zfill(4) + '.tif')))
                 inverted_img = util.invert(img)
 
         else:
@@ -501,10 +501,12 @@ class AppContext(ApplicationContext):
             os.remove('log.txt')
 
         #  startup message in log file and text browser
+        self.ui_main_window.statusbar.showMessage(str(datetime.now()))
         message = '> ' + str(datetime.now())
         self.d_print(message)
 
         message = '> Starting new instance of pytecpiv_app_' + version
+        self.ui_main_window.statusbar.showMessage(message)
         self.d_print(message)
 
         #  make first credit figure
@@ -544,14 +546,17 @@ class AppContext(ApplicationContext):
         return self.app.exec_()
 
     def apply_rectification(self):
+        from pytecpiv_rectif import correct_images
+        import json
+
         global current_dataset_name, dataset_index, time_step, display_settings
 
         current_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
-        current_frame_num = int(self.ui_main_window.frame_text.text())
-        import os
-        import json
+        # current_frame_num = int(self.ui_main_window.frame_text.text())
+
         with open('current_project_metadata.json') as f:
             project_metadata = json.load(f)
+
         datasets = project_metadata['datasets']
         this_dataset = datasets[current_dataset_name]
         img_path = this_dataset['path_img']
@@ -566,26 +571,28 @@ class AppContext(ApplicationContext):
         self.ui_main_window.statusbar.showMessage('Correcting images. Please wait this may take a while.')
 
         ##### NEW
-        from pytecpiv_rectif import correct_images
-
-        #correct_images(img_path, starting_frame, number_frames, calibration_method, calibration_function_proj,
+        # correct_images(img_path, starting_frame, number_frames, calibration_method, calibration_function_proj,
         #               calibration_function_poly)
 
+        ## Try bringing the function correct images in the main file for threading
+
         # start the import in a different thread in order to not freeze the GUI
-        worker = Worker(correct_images(img_path, starting_frame, number_frames,
-                                       calibration_method,
-                                       calibration_function_proj,
-                                       calibration_function_poly))
+        worker_rectif = Worker(correct_images(img_path, starting_frame, number_frames,
+                                              calibration_method,
+                                              calibration_function_proj,
+                                              calibration_function_poly))
 
         # actions to be taken after import thread is finished.
-        worker.signals.finished.connect(self.correction_thread_complete)
+        worker_rectif.signals.finished.connect(self.correction_thread_complete)
 
         # start the thread
-        self.threadpool.start(worker)
+        self.threadpool.start(worker_rectif)
 
         # END
 
     def correction_thread_complete(self):
+
+        print('RECTIFICATION FINISHED')
 
         # remove message
         self.ui_main_window.statusbar.clearMessage()
@@ -694,7 +701,7 @@ class AppContext(ApplicationContext):
         current_frame_number = int(self.ui_main_window.frame_text.text())
 
         img = io.imread(os.path.join(project_root_path, project_name, 'CALIB', 'IMG_' +
-                                     str(current_frame_number).zfill(4)+ '.tif'))
+                                     str(current_frame_number).zfill(4) + '.tif'))
 
         corrected_corners = np.zeros(points.shape)
 
@@ -766,12 +773,12 @@ class AppContext(ApplicationContext):
             self.d_print(message)
 
         # save rectified image
-        io.imsave(os.path.join(calib_rect_proj_folder, 'IMG_'+str(current_frame_number).zfill(4)+'.tif'),
+        io.imsave(os.path.join(calib_rect_proj_folder, 'IMG_' + str(current_frame_number).zfill(4) + '.tif'),
                   img_warped_proj)
 
         # create dataset
         img_width, img_height = imagesize.get(os.path.join(calib_rect_proj_folder, 'IMG_' +
-                                                           str(current_frame_number).zfill(4)+'.tif'))
+                                                           str(current_frame_number).zfill(4) + '.tif'))
         new_dataset = {'starting_frame': current_frame_number,
                        'number_frames': 1,
                        'image': True,
