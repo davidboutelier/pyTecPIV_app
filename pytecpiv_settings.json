@@ -1,1 +1,5 @@
+<<<<<<< Updated upstream
 {"sources": {"sources_path": "/Users/dpb509/Documents/PIV/SOURCES"}, "projects": {"projects_path": "/Users/dpb509/Documents/PIV/PROJECTS"}, "parallel": {"core-fraction": 1.0}}
+=======
+{"sources": {"sources_path": "/home/dpb509/Desktop/SOURCES"}, "projects": {"projects_path": "/home/dpb509/Desktop/PROJECTS"}, "parallel": {"core-fraction": 1.0}}
+>>>>>>> Stashed changes

@@ -473,6 +473,7 @@ class AppContext(ApplicationContext):
         self.dialog_calibration_boards = DialogCalibrationBoards()
 
         self.ui_main_window.new_project_menu.triggered.connect(self.new_project)  # new project
+
         self.ui_main_window.import_calib_dng.triggered.connect(self.import_calib_img_dng)  # import calib img dng
         self.ui_main_window.import_exp_dng.triggered.connect(self.import_exp_img_dng)  # import calib img dng
 
@@ -487,6 +488,7 @@ class AppContext(ApplicationContext):
         self.ui_main_window.action_proj_poly3.triggered.connect(self.rectification_proj_poly3)
         self.ui_main_window.action_proj_poly2.triggered.connect(self.rectification_proj_poly2)
 
+        # rectification
         self.ui_main_window.actionRectify.triggered.connect(self.apply_rectification)
 
         # dialog image intensity

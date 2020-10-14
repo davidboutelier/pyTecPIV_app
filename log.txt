@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 > 2020-08-23 16:20:29.566306
 > Starting new instance of pytecpiv_app_0.0.1alpha2
 > New project created: /Users/dpb509/Documents/PIV/PROJECTS/test4
@@ -11,3 +12,18 @@
 > projective calibration function saved as: /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/calibration_proj.pckl
 > Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/RECT
 > Creating and populating directory /Users/dpb509/Documents/PIV/PROJECTS/test4/CALIB/RECT/PROJ
+=======
+> 2020-08-18 17:25:08.503987
+> Starting new instance of pytecpiv_app_0.0.1alpha2
+> New project created: /home/dpb509/Desktop/PROJECTS/testsub
+> Importing dng calibration images from /home/dpb509/Desktop/SOURCES/SUB/CALIB
+> Creating and populating directory /home/dpb509/Desktop/PROJECTS/testsub/CALIB
+> 2 dng calibration images imported
+> Importing dng calibration images from /home/dpb509/Desktop/SOURCES/SUB/EXP
+> Creating and populating directory /home/dpb509/Desktop/PROJECTS/testsub/EXP
+> 151 dng experimental images imported
+> image resolution after projective transformation will be: 6.85 pixels/mm
+> projective calibration function saved as: /home/dpb509/Desktop/PROJECTS/testsub/CALIB/calibration_proj.pckl
+> Creating and populating directory /home/dpb509/Desktop/PROJECTS/testsub/CALIB/RECT
+> Creating and populating directory /home/dpb509/Desktop/PROJECTS/testsub/CALIB/RECT/PROJ
+>>>>>>> Stashed changes
