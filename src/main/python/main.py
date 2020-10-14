@@ -565,11 +565,44 @@ class AppContext(ApplicationContext):
 
         self.ui_main_window.statusbar.showMessage('Correcting images. Please wait this may take a while.')
 
+        ##### NEW
         from pytecpiv_rectif import correct_images
-        correct_images(img_path, starting_frame, number_frames, calibration_method, calibration_function_proj,
-                       calibration_function_poly)
 
+        #correct_images(img_path, starting_frame, number_frames, calibration_method, calibration_function_proj,
+        #               calibration_function_poly)
+
+        # start the import in a different thread in order to not freeze the GUI
+        worker = Worker(correct_images(img_path, starting_frame, number_frames,
+                                       calibration_method,
+                                       calibration_function_proj,
+                                       calibration_function_poly))
+
+        # actions to be taken after import thread is finished.
+        worker.signals.finished.connect(self.correction_thread_complete)
+
+        # start the thread
+        self.threadpool.start(worker)
+
+        # END
+
+    def correction_thread_complete(self):
+
+        # remove message
         self.ui_main_window.statusbar.clearMessage()
+
+        current_dataset_name = self.ui_main_window.Dataset_comboBox.currentText()
+        current_frame_num = int(self.ui_main_window.frame_text.text())
+
+        import os
+        import json
+        with open('current_project_metadata.json') as f:
+            project_metadata = json.load(f)
+
+        datasets = project_metadata['datasets']
+        this_dataset = datasets[current_dataset_name]
+        img_path = this_dataset['path_img']
+        starting_frame = this_dataset['starting_frame']
+        number_frames = this_dataset['number_frames']
 
         # create new dataset
         import imagesize
