@@ -1,6 +1,2 @@
-> 2020-10-16 10:37:34.173379
+> 2020-10-16 11:53:58.334595
 > Starting new instance of pytecpiv_app_0.0.1alpha2
-> New project created: /Volumes/SSD/PROJECTS/test8
-> Importing dng calibration images from /Volumes/SSD/SOURCES/SUB/CALIB
-> Creating and populating directory /Volumes/SSD/PROJECTS/test8/CALIB
-> 2 dng images imported

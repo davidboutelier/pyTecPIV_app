@@ -35,6 +35,8 @@ fig1 = plt.figure()
 version = ''
 app_name = ''
 
+max_cores = os.cpu_count()
+
 import traceback, sys
 
 
@@ -222,13 +224,21 @@ class DialogConf:
 
     def __init__(self):
         super().__init__()
-
+        import os
         self.ui_dialog_conf = uic.loadUi(os.path.join('src', 'build', 'ui', 'dialog_conf.ui'))
         self.ui_dialog_conf.setWindowTitle('configuration')
+
+        minimum = 1
+        maximum = os.cpu_count()
+
+        self.ui_dialog_conf.cores_spinBox.setRange(minimum, maximum)
+        self.ui_dialog_conf.cores_spinBox.setValue(maximum)
 
         # call backs for dialog here
         self.ui_dialog_conf.set_projects_button.clicked.connect(self.set_projects_path)
         self.ui_dialog_conf.set_sources_button.clicked.connect(self.set_sources_path)
+
+
 
     def set_projects_path(self):
         """
@@ -250,7 +260,7 @@ class DialogConf:
         new_projects_path = os.path.normpath(new_projects_path)
 
         # get value cores
-        core_fraction = self.ui_dialog_conf.SliderCores.value() / 100
+        core_number = self.ui_dialog_conf.cores_spinBox.value()
 
         if file_exist == 'yes':
             #  write in the file
@@ -258,7 +268,7 @@ class DialogConf:
                 pytecpiv_settings = json.load(f)
 
             pytecpiv_settings['projects'] = {'projects_path': new_projects_path}
-            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
+            pytecpiv_settings['parallel'] = {'core_number': core_number}
 
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
@@ -303,7 +313,7 @@ class DialogConf:
         new_sources_path = os.path.normpath(new_sources_path)
 
         # get value cores
-        core_fraction = self.ui_dialog_conf.SliderCores.value() / 100
+        core_number = self.ui_dialog_conf.cores_spinBox.value()
 
         if file_exist == 'yes':
             #  write in the file
@@ -311,7 +321,7 @@ class DialogConf:
                 pytecpiv_settings = json.load(f)
 
             pytecpiv_settings['sources'] = {'sources_path': new_sources_path}
-            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
+            pytecpiv_settings['parallel'] = {'core_number': core_number}
 
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
@@ -325,7 +335,7 @@ class DialogConf:
 
             pytecpiv_settings['sources'] = {'sources_path': new_sources_path}
             pytecpiv_settings['projects'] = {'projects_path': ' '}
-            pytecpiv_settings['parallel'] = {'core-fraction': core_fraction}
+            pytecpiv_settings['parallel'] = {'core_number': core_number}
 
             with open('pytecpiv_settings.json', 'w') as outfile:
                 json.dump(pytecpiv_settings, outfile)
@@ -1079,7 +1089,7 @@ class AppContext(ApplicationContext):
         sources = pytecpiv_settings['sources']
         sources_path = sources['sources_path']
         parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
+        use_cores = parallel_conf['core_number']
 
         source_calib_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_calib_path = os.path.normpath(source_calib_path)
@@ -1111,10 +1121,6 @@ class AppContext(ApplicationContext):
 
         list_img = sorted(os.listdir(source_calib_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
-
-        # get number of available core
-        available_cores = os.cpu_count()
-        use_cores = int(fraction_core * available_cores)
 
         # start the import in a different thread in order to not freeze the GUI
         worker = Worker(self.import_img, source_calib_path, calibration_folder, use_cores, num_img,
@@ -1162,7 +1168,7 @@ class AppContext(ApplicationContext):
         sources_path = sources['sources_path']
 
         parallel_conf = pytecpiv_settings['parallel']
-        fraction_core = parallel_conf['core-fraction']
+        use_cores = parallel_conf['core_number']
 
         source_exp_path = QFileDialog.getExistingDirectory(self.ui_main_window, 'Open directory', sources_path)
         source_exp_path = os.path.normpath(source_exp_path)
@@ -1194,10 +1200,6 @@ class AppContext(ApplicationContext):
 
         list_img = sorted(os.listdir(source_exp_path))  # find images in target directory
         num_img = len(list_img)  # get number of images in directory
-
-        # get number of available core
-        available_cores = os.cpu_count()
-        use_cores = int(fraction_core * available_cores)
 
         # start the import in a different thread in order to not freeze the GUI
         worker = Worker(self.import_img, source_exp_path, exp_folder, use_cores, num_img,
