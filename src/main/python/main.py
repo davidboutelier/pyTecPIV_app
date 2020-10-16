@@ -545,8 +545,41 @@ class AppContext(ApplicationContext):
         self.ui_main_window.show()
         return self.app.exec_()
 
+    def correct_images(self, img_path, start_frame, number_frames, calibration_method, calibration_function_proj,
+                       calibration_function_poly):
+        import os
+        import pickle
+        from skimage import io, img_as_uint
+        from skimage.transform import warp
+        import warnings
+
+        corrected_directory = os.path.join(img_path, 'Corrected')
+        if not os.path.exists(corrected_directory):
+            os.makedirs(corrected_directory)
+
+        if calibration_method == 'projective':
+            f = open(calibration_function_proj, 'rb')
+            tform_proj = pickle.load(f)
+            f.close()
+
+            for i in range(start_frame, start_frame + number_frames):
+                img = io.imread(os.path.join(img_path, 'IMG_' + str(i).zfill(4) + '.tif'))
+                img_warped_proj = warp(img, tform_proj)
+                warnings.filterwarnings("ignore", category=UserWarning)
+                img_warped_proj = img_as_uint(img_warped_proj)
+                io.imsave(os.path.join(corrected_directory, 'IMG_' + str(i).zfill(4) + '.tif'), img_warped_proj)
+
+        elif calibration_method == 'polynomial':
+            f = open(calibration_function_poly, 'rb')
+            tform_poly = pickle.load(f)
+            f.close()
+
+            print('polynomial not implemented yet')
+        else:
+            print('projective and polynomial not implemented yet')
+
     def apply_rectification(self):
-        from pytecpiv_rectif import correct_images
+        #from pytecpiv_rectif import correct_images
         import json
 
         global current_dataset_name, dataset_index, time_step, display_settings
@@ -577,7 +610,7 @@ class AppContext(ApplicationContext):
         ## Try bringing the function correct images in the main file for threading
 
         # start the import in a different thread in order to not freeze the GUI
-        worker_rectif = Worker(correct_images(img_path, starting_frame, number_frames,
+        worker_rectif = Worker(self.correct_images(img_path, starting_frame, number_frames,
                                               calibration_method,
                                               calibration_function_proj,
                                               calibration_function_poly))
@@ -589,6 +622,8 @@ class AppContext(ApplicationContext):
         self.threadpool.start(worker_rectif)
 
         # END
+
+
 
     def correction_thread_complete(self):
 
@@ -967,7 +1002,7 @@ class AppContext(ApplicationContext):
 
         Parallel(n_jobs=use_cores)(delayed(convert_dng)
                                    (frame_num, os.path.join(source_path, list_img[frame_num]),
-                                    output_folder) for frame_num in range(0, num_img))
+                                    output_folder, num_img) for frame_num in range(0, num_img))
 
         with open('current_project_metadata.json') as f:
             project_metadata = json.load(f)
@@ -1032,6 +1067,7 @@ class AppContext(ApplicationContext):
         """
         import json
         import os
+        import time
         from PyQt5.QtWidgets import QFileDialog
 
         global current_dataset_name, dataset_index, time_step, display_settings
@@ -1089,6 +1125,23 @@ class AppContext(ApplicationContext):
 
         # start the thread
         self.threadpool.start(worker)
+
+        worker2 = Worker(self.count_files(calibration_folder, num_img))
+        
+        self.ui_main_window.statusbar.showMessage(message)
+
+    def count_files(self, folder, num_img):
+        # count number of images in destination folder
+        number_files = 0
+        while number_files < num_img:
+            print(number_files)
+            list_files = os.listdir(folder)
+            number_files = len(list_files)
+            percent_done = 100 * (number_files / num_img)
+            percent_done_formated = "{:.1f}".format(percent_done)
+            message = None
+            message = "Importing images. progress: " + str(percent_done_formated) + "%"
+        return message
 
     def import_exp_img_dng(self):
         """
@@ -1155,6 +1208,18 @@ class AppContext(ApplicationContext):
 
         # start the thread
         self.threadpool.start(worker)
+
+        # count number of images in destination folder
+        number_files = 0
+        while number_files < num_img:
+            list_files = os.listdir(exp_folder)
+            number_files = len(list_files)
+            percent_done = 100 * (number_files / num_img)
+            percent_done_formated = "{:.1f}".format(percent_done)
+            message = None
+            message = "progress: " + str(percent_done_formated) + "%"
+            self.ui_main_window.statusbar.showMessage("Importing images." + message)
+            #time.sleep(1)
 
     def dataset_combobox_fn(self):
         import json

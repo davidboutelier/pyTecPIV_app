@@ -2,7 +2,8 @@ def rgb2gray(rgb):
     import numpy as np
     return np.dot(rgb[..., :3], [0.2989, 0.5870, 0.1140])
 
-def convert_dng(frame_num, file, dir_out):
+
+def convert_dng(frame_num, file, dir_out, num_img):
     import os
     import rawpy
     import numpy as np
@@ -18,5 +19,4 @@ def convert_dng(frame_num, file, dir_out):
         warnings.filterwarnings("ignore", category=UserWarning)
         bit_16_gray_img = img_as_uint(gray_img)
         io.imsave(os.path.join(dir_out, 'IMG_' + str(frame_num + 1).zfill(4) + '.tif'), bit_16_gray_img)
-        message = '> ' + file + ' -> ' + os.path.join(dir_out, 'IMG_' + str(frame_num + 1).zfill(4) + '.tif')
-        return message
+

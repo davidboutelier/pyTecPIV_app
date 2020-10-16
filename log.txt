@@ -1,13 +1,6 @@
-> 2020-10-15 10:10:31.517875
+> 2020-10-16 10:37:34.173379
 > Starting new instance of pytecpiv_app_0.0.1alpha2
-> New project created: /Volumes/SSD/PROJECTS/test8901
-> Importing dng calibration images from /Volumes/SSD/SOURCES/MINI/CALIB
-> Creating and populating directory /Volumes/SSD/PROJECTS/test8901/CALIB
-> 1 dng images imported
-> Importing dng calibration images from /Volumes/SSD/SOURCES/MINI/EXP2
-> Creating and populating directory /Volumes/SSD/PROJECTS/test8901/EXP
-> 21 dng images imported
-> image resolution after projective transformation will be: 6.85 pixels/mm
-> projective calibration function saved as: /Volumes/SSD/PROJECTS/test8901/CALIB/calibration_proj.pckl
-> Creating and populating directory /Volumes/SSD/PROJECTS/test8901/CALIB/RECT
-> Creating and populating directory /Volumes/SSD/PROJECTS/test8901/CALIB/RECT/PROJ
+> New project created: /Volumes/SSD/PROJECTS/test8
+> Importing dng calibration images from /Volumes/SSD/SOURCES/SUB/CALIB
+> Creating and populating directory /Volumes/SSD/PROJECTS/test8/CALIB
+> 2 dng images imported
